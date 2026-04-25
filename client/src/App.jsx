@@ -18,10 +18,10 @@ import QuizResultPage from "./pages/Quizzes/QuizResultPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
+import { useAuth } from "./context/AuthContext";
 
 const App = () => {
-  const isAuthenticated = true; // Replace with your authentication logic
-  const loading = false; // Replace with your loading state logic
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
