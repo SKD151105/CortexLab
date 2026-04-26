@@ -1,11 +1,48 @@
-import jwt from 'jsonwebtoken'
-import User from '../models/User.js'
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import RefreshToken from '../models/RefreshToken.js';
+import User from '../models/User.js';
 
-// Generate JWT
-const generateToken = (id) => {
+const ACCESS_TOKEN_EXPIRE = process.env.JWT_EXPIRE || '15m';
+const REFRESH_TOKEN_EXPIRE_DAYS = Number(process.env.REFRESH_TOKEN_EXPIRE_DAYS || 30);
+
+const sanitizeUser = (user) => ({
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    profileImage: user.profileImage,
+    createdAt: user.createdAt,
+});
+
+const generateAccessToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE || "7d",
+        expiresIn: ACCESS_TOKEN_EXPIRE,
     });
+};
+
+const generateRefreshTokenValue = () => crypto.randomBytes(64).toString('hex');
+
+const getClientMeta = (req) => ({
+    userAgent: req.get('user-agent') || '',
+    ipAddress: req.ip || req.connection?.remoteAddress || '',
+});
+
+const issueAuthTokens = async (userId, req) => {
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = generateRefreshTokenValue();
+    const tokenHash = RefreshToken.hashToken(refreshToken);
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60 * 1000);
+    const { userAgent, ipAddress } = getClientMeta(req);
+
+    await RefreshToken.create({
+        userId,
+        tokenHash,
+        expiresAt,
+        userAgent,
+        ipAddress,
+    });
+
+    return { accessToken, refreshToken };
 };
 
 // @desc Register new user
@@ -31,21 +68,21 @@ export const register = async (req, res, next) => {
         // Create new user
         const user = await User.create({ username, email, password });
 
-        // Generate token
-        const token = generateToken(user._id);
+        const { accessToken, refreshToken } = await issueAuthTokens(user._id, req);
+        const userData = sanitizeUser(user);
 
         res.status(201).json({
             success: true,
             data: {
-                user: {
-                    id: user._id,
-                    username: user.username,
-                    email: user.email,
-                    profileImage: user.profileImage,
-                    createdAt: user.createdAt
-                },
-                token,
+                user: userData,
+                token: accessToken,
+                accessToken,
+                refreshToken,
             },
+            user: userData,
+            token: accessToken,
+            accessToken,
+            refreshToken,
             message: 'User registered successfully',
         });
 
@@ -90,19 +127,21 @@ export const login = async (req, res, next) => {
             });
         }
 
-        // Generate token
-        const token = generateToken(user._id);
+        const { accessToken, refreshToken } = await issueAuthTokens(user._id, req);
+        const userData = sanitizeUser(user);
 
         res.status(200).json({
             success: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                profileImage: user.profileImage,
-                createdAt: user.createdAt
+            user: userData,
+            data: {
+                user: userData,
+                token: accessToken,
+                accessToken,
+                refreshToken,
             },
-            token,
+            token: accessToken,
+            accessToken,
+            refreshToken,
             message: 'Login successful'
         });
 
@@ -197,12 +236,95 @@ export const changePassword = async (req, res, next) => {
         // Update password
         user.password = newPassword;
         await user.save();
+        await RefreshToken.deleteMany({ userId: user._id });
 
         res.status(200).json({
             success: true,
             message: 'Password updated successfully'
         });
 
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc Refresh access token
+// @route POST /api/auth/refresh-token
+// @access Public
+export const refreshAccessToken = async (req, res, next) => {
+    try {
+        const { refreshToken } = req.body || {};
+
+        if (!refreshToken) {
+            return res.status(400).json({
+                success: false,
+                error: 'Refresh token is required',
+                statusCode: 400,
+            });
+        }
+
+        const tokenHash = RefreshToken.hashToken(refreshToken);
+        const storedToken = await RefreshToken.findOne({
+            tokenHash,
+            revokedAt: null,
+            expiresAt: { $gt: new Date() },
+        });
+
+        if (!storedToken) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid or expired refresh token',
+                statusCode: 401,
+            });
+        }
+
+        const user = await User.findById(storedToken.userId);
+        if (!user) {
+            await RefreshToken.deleteOne({ _id: storedToken._id });
+            return res.status(401).json({
+                success: false,
+                error: 'User not found',
+                statusCode: 401,
+            });
+        }
+
+        storedToken.revokedAt = new Date();
+        await storedToken.save();
+
+        const { accessToken, refreshToken: rotatedRefreshToken } = await issueAuthTokens(user._id, req);
+        const userData = sanitizeUser(user);
+
+        res.status(200).json({
+            success: true,
+            user: userData,
+            token: accessToken,
+            accessToken,
+            refreshToken: rotatedRefreshToken,
+            message: 'Token refreshed successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc Logout user and revoke refresh token
+// @route POST /api/auth/logout
+// @access Private
+export const logout = async (req, res, next) => {
+    try {
+        const { refreshToken } = req.body || {};
+
+        if (refreshToken) {
+            const tokenHash = RefreshToken.hashToken(refreshToken);
+            await RefreshToken.deleteOne({ tokenHash, userId: req.user._id });
+        } else {
+            await RefreshToken.deleteMany({ userId: req.user._id });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Logged out successfully',
+        });
     } catch (error) {
         next(error);
     }

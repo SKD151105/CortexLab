@@ -13,6 +13,28 @@ const login = async (email, password) => {
     }
 };
 
+const refreshToken = async (token) => {
+    try {
+        const response = await axiosInstance.post(API_PATHS.AUTH.REFRESH_TOKEN, {
+            refreshToken: token,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'An unknown error occurred' };
+    }
+};
+
+const logout = async (token) => {
+    try {
+        const response = await axiosInstance.post(API_PATHS.AUTH.LOGOUT, {
+            refreshToken: token,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'An unknown error occurred' };
+    }
+};
+
 const register = async (username, email, password) => {
     try {
         const response = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
@@ -56,6 +78,8 @@ const changePassword = async (passwords) => {
 const authService = {
     login,
     register,
+    refreshToken,
+    logout,
     getProfile,
     updateProfile,
     changePassword,

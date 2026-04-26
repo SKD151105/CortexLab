@@ -6,6 +6,8 @@ import {
     getProfile,
     updateProfile,
     changePassword,
+    refreshAccessToken,
+    logout,
 } from '../controllers/authController.js';
 import protect from '../middleware/auth.js';
 
@@ -36,13 +38,21 @@ const loginValidation = [
         .withMessage('Password is required')
 ];
 
+    const refreshValidation = [
+        body('refreshToken')
+        .notEmpty()
+        .withMessage('Refresh token is required')
+    ];
+
 // Public routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+router.post('/refresh-token', refreshValidation, refreshAccessToken);
 
 // Protected routes
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.post('/change-password', protect, changePassword);
+router.post('/logout', protect, logout);
 
 export default router;

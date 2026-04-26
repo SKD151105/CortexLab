@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import authService from "../services/authService";
 
 const AuthContext = createContext();
 
@@ -27,8 +28,11 @@ export const AuthProvider = ({ children }) => {
 		return Boolean(token && userStr);
 	});
 
-	const login = (userData, token) => {
-		localStorage.setItem('token', token);
+	const login = (userData, accessToken, refreshToken) => {
+		localStorage.setItem('token', accessToken);
+		if (refreshToken) {
+			localStorage.setItem('refreshToken', refreshToken);
+		}
 		localStorage.setItem('user', JSON.stringify(userData));
 
 		setUser(userData);
@@ -36,7 +40,16 @@ export const AuthProvider = ({ children }) => {
 	};
 
 	const logout = useCallback(() => {
+		const currentRefreshToken = localStorage.getItem('refreshToken');
+
+		if (currentRefreshToken) {
+			authService.logout(currentRefreshToken).catch(() => {
+				// Ignore network/logout API failures, local session is cleared regardless.
+			});
+		}
+
 		localStorage.removeItem('token');
+		localStorage.removeItem('refreshToken');
 		localStorage.removeItem('user');
 
 		setUser(null);
@@ -54,10 +67,26 @@ export const AuthProvider = ({ children }) => {
 		setLoading(true);
 		try {
 			const token = localStorage.getItem('token');
+			const refreshToken = localStorage.getItem('refreshToken');
 			const userStr = localStorage.getItem('user');
 
 			if (token && userStr) {
 				const userData = JSON.parse(userStr);
+				setUser(userData);
+				setIsAuthenticated(true);
+			} else if (refreshToken) {
+				const response = await authService.refreshToken(refreshToken);
+				const nextAccessToken = response.accessToken || response.token;
+				const nextRefreshToken = response.refreshToken;
+				const userData = response.user || response.data?.user;
+
+				if (!nextAccessToken || !nextRefreshToken || !userData) {
+					throw new Error('Invalid refresh response');
+				}
+
+				localStorage.setItem('token', nextAccessToken);
+				localStorage.setItem('refreshToken', nextRefreshToken);
+				localStorage.setItem('user', JSON.stringify(userData));
 				setUser(userData);
 				setIsAuthenticated(true);
 			} else {
@@ -71,6 +100,10 @@ export const AuthProvider = ({ children }) => {
 			setLoading(false);
 		}
 	}, [logout]);
+
+	useEffect(() => {
+		checkAuthStatus();
+	}, [checkAuthStatus]);
 
 	const value = {
 		user,

@@ -34,7 +34,7 @@ const Modal = ({ isOpen, onClose, title, children, panelClassName = "" }) => {
         ></div>
 
         <div
-          className={`relative z-10 w-full max-w-lg rounded-2xl border border-slate-200/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/20 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 ${panelClassName}`}
+          className={`relative z-10 w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl rounded-2xl border border-slate-200/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/20 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 ${panelClassName}`}
         >
           <button
             onClick={onClose}

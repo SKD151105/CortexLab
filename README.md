@@ -44,7 +44,7 @@ CortexLab is built for students and self-learners who want to turn static study 
 
 | Domain | Capability | Details |
 | --- | --- | --- |
-| Authentication | JWT-based auth and protected routes | Register, login, profile update, password change |
+| Authentication | JWT-based auth, refresh-token sessions, protected routes | Register, login, refresh, profile update, password change, logout |
 | Document Ingestion | PDF upload and parsing | Upload PDF, extract text, chunk for retrieval |
 | AI Study Tools | Flashcards, quizzes, summaries | Gemini-backed generation from document context |
 | AI Chat | Context-aware Q&A | Retrieves relevant chunks before answer generation |
@@ -110,6 +110,10 @@ flowchart TD
 	- flashcards
 	- quizzes
 	- progress
+- Security middleware:
+	- Helmet security headers
+	- Global request rate limiting
+	- Stricter auth route throttling
 - PDF ingestion pipeline:
 	1. Upload PDF (Multer)
 	2. Extract text (pdf-parse)
@@ -154,6 +158,8 @@ Base URL (development): http://localhost:8000
 
 - POST /api/auth/register
 - POST /api/auth/login
+- POST /api/auth/refresh-token
+- POST /api/auth/logout
 - GET /api/auth/profile
 - PUT /api/auth/profile
 - POST /api/auth/change-password
@@ -205,11 +211,17 @@ PORT=8000
 NODE_ENV=development
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_secure_random_secret
-JWT_EXPIRE=7d
+JWT_EXPIRE=15m
+REFRESH_TOKEN_EXPIRE_DAYS=30
 GEMINI_API_KEY=your_google_gemini_api_key
 GEMINI_TIMEOUT_MS=45000
 MAX_FILE_SIZE=41943040
 MAX_CHUNKS=3000
+CORS_ORIGIN=http://localhost:5173,https://your-production-domain.com
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=500
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX_REQUESTS=20
 ```
 
 ### Client (.env in client/)
@@ -275,30 +287,30 @@ Frontend is currently deployed on Vercel.
 ### Security Implemented
 
 - JWT bearer authentication
+- Refresh-token based session persistence with token rotation
 - Protected route middleware
+- Helmet-powered security headers
+- Global request throttling and tighter auth endpoint rate limiting
 - bcrypt password hashing
 - PDF MIME-type filtering and upload size limits
 
 ### Operational Notes
 
-- CORS is currently configured as wildcard and should be restricted in production.
+- CORS should be configured with explicit allowed origins in production.
 - PDF processing runs in-process; a queue worker architecture is recommended for scale.
-- Client stores token in localStorage.
+- Client stores the access token and refresh token locally for session restoration.
 
 ## Limitations and Roadmap
 
 ### Current Limitations
 
 - No automated test suite yet.
-- No refresh-token or silent re-auth flow.
 - Study streak currently uses placeholder logic.
-- No request rate limiting or brute-force guard yet.
+- Refresh tokens are currently persisted on the client side, so moving them to HttpOnly cookies would improve XSS resistance.
 
 ### Planned Improvements
 
-- Add refresh-token based session persistence.
 - Move PDF processing to a queue-backed worker.
-- Introduce rate limiting and security headers.
 - Add API and frontend test coverage.
 - Expand progress analytics with true streak and spaced-repetition signals.
 

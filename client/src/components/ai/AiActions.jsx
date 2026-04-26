@@ -157,7 +157,7 @@ const AiActions = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title={modalTitle}
-          panelClassName="max-w-4xl p-6 sm:p-8"
+          panelClassName="max-w-5xl lg:max-w-6xl p-6 sm:p-8 lg:p-10"
         >
           <div className="max-h-[72vh] overflow-y-auto pr-2 sm:pr-4 prose prose-sm max-w-none prose-slate">
             <MarkdownRenderer content={modalContent} />

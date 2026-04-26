@@ -3,11 +3,12 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { error } from 'console';
 import errorHandler from './middleware/errorHandler.js';
 import connectDB from './config/db.js';
+import { authLimiter, globalLimiter } from './middleware/rateLimit.js';
 
 import authRoutes from './routes/authRoutes.js';
 import documentRoutes from './routes/documentRoutes.js'
@@ -22,15 +23,29 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Express app
 const app = express();
+app.set('trust proxy', 1);
 
 // Connect to MongoDB
 connectDB();
 
+const allowedOrigins = (process.env.CORS_ORIGIN || '*')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(
+    helmet({
+        crossOriginResourcePolicy: false,
+    })
+);
+
+app.use(globalLimiter);
+
 // Middleware to handle CORS
 app.use(
     cors({
-        origin: "*",
-        METHODS: ["GET", "POST", "PUT", "DELETE"],
+        origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,
     })
@@ -44,7 +59,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads', 'documents')));
 
 // Routes 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/ai', aiRoutes);

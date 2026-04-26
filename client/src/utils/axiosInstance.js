@@ -1,5 +1,5 @@
 import axios from "axios";
-import { BASE_URL } from "./apiPaths";
+import { API_PATHS, BASE_URL } from "./apiPaths";
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -8,6 +8,45 @@ const axiosInstance = axios.create({
         Accept: "application/json",
     },
 });
+
+let refreshPromise = null;
+
+const clearSessionAndRedirect = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
+    if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+    }
+};
+
+const getRefreshedToken = async () => {
+    const storedRefreshToken = localStorage.getItem("refreshToken");
+    if (!storedRefreshToken) {
+        throw new Error("Missing refresh token");
+    }
+
+    const response = await axios.post(`${BASE_URL}${API_PATHS.AUTH.REFRESH_TOKEN}`, {
+        refreshToken: storedRefreshToken,
+    });
+
+    const nextAccessToken = response.data?.accessToken || response.data?.token;
+    const nextRefreshToken = response.data?.refreshToken;
+    const user = response.data?.user || response.data?.data?.user;
+
+    if (!nextAccessToken || !nextRefreshToken) {
+        throw new Error("Invalid refresh response");
+    }
+
+    localStorage.setItem("token", nextAccessToken);
+    localStorage.setItem("refreshToken", nextRefreshToken);
+    if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+    }
+
+    return nextAccessToken;
+};
 
 // Request Interceptor
 axiosInstance.interceptors.request.use(
@@ -34,15 +73,36 @@ axiosInstance.interceptors.response.use(
     (response) => {
         return response;
     },
-    (error) => {
+    async (error) => {
         if (error.response) {
-            if (error.response.status === 401) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+            const originalRequest = error.config;
 
-                if (window.location.pathname !== "/login") {
-                    window.location.href = "/login";
+            if (
+                error.response.status === 401 &&
+                !originalRequest?._retry &&
+                !originalRequest?.url?.includes(API_PATHS.AUTH.LOGIN) &&
+                !originalRequest?.url?.includes(API_PATHS.AUTH.REGISTER) &&
+                !originalRequest?.url?.includes(API_PATHS.AUTH.REFRESH_TOKEN)
+            ) {
+                originalRequest._retry = true;
+
+                try {
+                    if (!refreshPromise) {
+                        refreshPromise = getRefreshedToken().finally(() => {
+                            refreshPromise = null;
+                        });
+                    }
+                    const accessToken = await refreshPromise;
+                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                    return axiosInstance(originalRequest);
+                } catch {
+                    clearSessionAndRedirect();
+                    return Promise.reject(error);
                 }
+            }
+
+            if (error.response.status === 401) {
+                clearSessionAndRedirect();
             }
 
             if (error.response.status === 500) {

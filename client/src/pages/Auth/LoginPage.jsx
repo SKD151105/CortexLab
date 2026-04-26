@@ -20,8 +20,16 @@ const LoginPage = () => {
     setEror("");
     setLoading(true);
     try {
-      const { token, user } = await authService.login(email, password);
-      login(user, token);
+      const response = await authService.login(email, password);
+      const accessToken = response.accessToken || response.token;
+      const refreshToken = response.refreshToken;
+      const user = response.user || response.data?.user;
+
+      if (!accessToken || !refreshToken || !user) {
+        throw new Error("Invalid login response");
+      }
+
+      login(user, accessToken, refreshToken);
       toast.success("Logged in Successfully!");
       navigate("/dashboard");
     } catch (err) {
