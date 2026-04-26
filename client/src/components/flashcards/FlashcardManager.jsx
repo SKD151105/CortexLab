@@ -85,7 +85,6 @@ const FlashcardManager = ({ documentId }) => {
 
     try {
       await flashcardService.reviewFlashcard(currentCard._id, index);
-      toast.success("Flashcard reviewed!");
     } catch (error) {
       toast.error("Failed to review flashcard.");
       console.error(error);

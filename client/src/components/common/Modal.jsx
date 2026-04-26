@@ -43,11 +43,13 @@ const Modal = ({ isOpen, onClose, title, children, panelClassName = "" }) => {
             <X className="w-5 h-5" strokeWidth={2} />
           </button>
 
-          <div className="mb-6 pr-8">
-            <h3 className="text-xl font-medium text-slate-900 tracking-tight">
-              {title}
-            </h3>
-          </div>
+          {title ? (
+            <div className="mb-6 pr-8">
+              <h3 className="text-xl font-medium text-slate-900 tracking-tight">
+                {title}
+              </h3>
+            </div>
+          ) : null}
 
           <div>{children}</div>
         </div>

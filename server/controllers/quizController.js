@@ -79,14 +79,6 @@ export const submitQuiz = async (req, res, next) => {
 			});
 		}
 
-		if (quiz.completedAt) {
-			return res.status(400).json({
-				success: false,
-				error: 'Quiz already completed',
-				statusCode: 400
-			});
-		}
-
 		// Process answers
 		let correctCount = 0;
 		const userAnswers = [];
@@ -112,7 +104,7 @@ export const submitQuiz = async (req, res, next) => {
 		// Calculate score
 		const score = Math.round((correctCount / quiz.totalQuestions) * 100);
 
-		// Update quiz
+		// Update quiz with most recent attempt
 		quiz.userAnswers = userAnswers;
 		quiz.score = score;
 		quiz.completedAt = new Date();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import documentService from "../../services/documentService";
 import Spinner from "../../components/common/Spinner";
 import toast from "react-hot-toast";
@@ -14,9 +14,12 @@ import QuizManager from "../../components/quizzes/QuizManager";
 
 const DocumentDetailPage = () => {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("Content");
+  const tabNames = ["Content", "Chat", "AI Actions", "Flashcards", "Quizzes"];
+  const requestedTab = searchParams.get("tab");
+  const activeTab = tabNames.includes(requestedTab) ? requestedTab : "Content";
 
   useEffect(() => {
     const fetchDocumentDetails = async () => {
@@ -33,6 +36,11 @@ const DocumentDetailPage = () => {
 
     fetchDocumentDetails();
   }, [id]);
+  const handleTabChange = (tabName) => {
+    setSearchParams(tabName === "Content" ? {} : { tab: tabName }, {
+      replace: true,
+    });
+  };
 
   // Helper function to get the full PDF URL
   const getPdfUrl = () => {
@@ -77,7 +85,7 @@ const DocumentDetailPage = () => {
         <div className="bg-gray-100 p-1">
           <iframe
             src={pdfUrl}
-            className="w-full h-[78vh] min-h-[700px] bg-white rounded border border-gray-300"
+            className="w-full h-[78vh] min-h-175 bg-white rounded border border-gray-300"
             title="PDF Viewer"
             frameBorder="0"
             style={{
@@ -137,7 +145,7 @@ const DocumentDetailPage = () => {
         </Link>
       </div>
       <PageHeader title={document.data.title} />
-      <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={handleTabChange} />
     </div>
   );
 };

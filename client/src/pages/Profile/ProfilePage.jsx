@@ -1,9 +1,275 @@
-import React from 'react'
+import React, { useState, useEffect } from "react";
+import PageHeader from "../../components/common/PageHeader";
+import Button from "../../components/common/Button";
+import Spinner from "../../components/common/Spinner";
+import authService from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
+import { User, Mail, Lock, Pencil } from "lucide-react";
 
 const ProfilePage = () => {
-  return (
-    <div>ProfilePage</div>
-  )
-}
+  const [loading, setLoading] = useState(true);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [usernameLoading, setUsernameLoading] = useState(false);
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
 
-export default ProfilePage
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+
+  const { updateUser } = useAuth();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await authService.getProfile();
+        setUsername(data.username);
+        setEmail(data.email);
+        setEditUsername(data.username);
+      } catch (error) {
+        toast.error("Failed to fetch profile data.");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleUsernameUpdate = async (e) => {
+    e.preventDefault();
+
+    if (!editUsername.trim()) {
+      toast.error("Username is required.");
+      return;
+    }
+
+    if (!editPassword.trim()) {
+      toast.error("Password is required.");
+      return;
+    }
+
+    setUsernameLoading(true);
+    try {
+      await authService.login(email, editPassword);
+      await authService.updateProfile({ username: editUsername.trim() });
+
+      setUsername(editUsername.trim());
+      setEditPassword("");
+      setIsEditingUsername(false);
+      updateUser({ username: editUsername.trim(), email });
+      toast.success("Username updated successfully!");
+    } catch (error) {
+      toast.error(error.message || "Failed to update username.");
+    } finally {
+      setUsernameLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (newPassword !== confirmNewPassword) {
+      toast.error("New passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters long.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await authService.changePassword({ currentPassword, newPassword });
+      toast.success("Password changed successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (error) {
+      toast.error(error.message || "Failed to change password.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <Spinner />;
+  }
+
+  return (
+    <div>
+      <PageHeader title="Profile Settings" />
+
+      <div className="space-y-8">
+        {/* User Information Display */}
+        <div className="bg-white border border-neutral-200 rounded-lg p-6">
+          <div className="flex items-start justify-between mb-4">
+            <h3 className="text-lg font-semibold text-neutral-900">
+              User Information
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsEditingUsername((prev) => !prev)}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-neutral-200 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                Username
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 text-neutral-400" />
+                </div>
+                <p className="w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-neutral-50 text-sm text-neutral-900">
+                  {username}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-neutral-400" />
+                </div>
+                <p className="w-full h-9 pl-9 pr-3 pt-2 border border-neutral-200 rounded-lg bg-neutral-50 text-sm text-neutral-900">
+                  {email}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {isEditingUsername && (
+            <form onSubmit={handleUsernameUpdate} className="space-y-4 mt-6 pt-6 border-t border-neutral-200">
+              <div>
+                <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                  New Username
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-neutral-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                    required
+                    className="w-full h-9 pl-9 pr-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-900 placeholder-neutral-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-neutral-400" />
+                  </div>
+                  <input
+                    type="password"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    required
+                    className="w-full h-9 pl-9 pr-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-900 placeholder-neutral-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <Button type="submit" disabled={usernameLoading}>
+                  {usernameLoading ? "Updating..." : "Update Username"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* Change Password Form */}
+        <div className="bg-white border border-neutral-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-neutral-900 mb-4">
+            Change Password
+          </h3>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                Current Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-neutral-400" />
+                </div>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                  className="w-full h-9 pl-9 pr-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-900 placeholder-neutral-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                New Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-neutral-400" />
+                </div>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  className="w-full h-9 pl-9 pr-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-900 placeholder-neutral-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1.5">
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-neutral-400" />
+                </div>
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                  className="w-full h-9 pl-9 pr-3 border border-neutral-200 rounded-lg bg-white text-sm text-neutral-900 placeholder-neutral-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#00d492] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <Button type="submit" disabled={passwordLoading}>
+                {passwordLoading ? "Changing..." : "Change Password"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProfilePage;

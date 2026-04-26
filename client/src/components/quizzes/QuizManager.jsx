@@ -21,8 +21,11 @@ const QuizManager = ({ documentId }) => {
   const [deleting, setDeleting] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
-  const fetchQuizzes = async () => {
-    setLoading(true);
+  const fetchQuizzes = async (showLoader = true) => {
+    if (showLoader) {
+      setLoading(true);
+    }
+
     try {
       const data = await quizService.getQuizzesForDocument(documentId);
       setQuizzes(data.data);
@@ -30,14 +33,38 @@ const QuizManager = ({ documentId }) => {
       toast.error("Failed to fetch quizzes.");
       console.error(error);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (documentId) {
-      fetchQuizzes();
-    }
+    if (!documentId) return;
+
+    let isMounted = true;
+
+    const loadQuizzes = async () => {
+      try {
+        const data = await quizService.getQuizzesForDocument(documentId);
+        if (!isMounted) return;
+        setQuizzes(data.data);
+      } catch (error) {
+        if (!isMounted) return;
+        toast.error("Failed to fetch quizzes.");
+        console.error(error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadQuizzes();
+
+    return () => {
+      isMounted = false;
+    };
   }, [documentId]);
 
   const handleGenerateQuiz = async (e) => {
@@ -93,7 +120,12 @@ const QuizManager = ({ documentId }) => {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {quizzes.map((quiz) => (
-          <QuizCard key={quiz._id} quiz={quiz} onDelete={handleDeleteRequest} />
+          <QuizCard
+            key={quiz._id}
+            quiz={quiz}
+            documentId={documentId}
+            onDelete={handleDeleteRequest}
+          />
         ))}
       </div>
     );
