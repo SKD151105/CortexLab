@@ -15,7 +15,7 @@
 
 CortexLab is a full-stack AI learning platform that converts PDF documents into active, test-driven study experiences. Instead of passively reading notes, learners can upload documents and instantly generate flashcards, quizzes, summaries, and contextual AI explanations.
 
-Live frontend: https://cortex-lab-ten.vercel.app
+Deployed (Live): https://cortex-lab-ten.vercel.app
 
 ## Table of Contents
 
