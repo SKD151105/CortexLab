@@ -31,7 +31,7 @@ export const uploadDocument = async (req, res, next) => {
 
         // Construct URL for the uploaded file
         const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
+        const fileUrl = `${baseUrl}/uploads/documents/${req.file.filename}`;
 
         // Create document record in the database
         const document = await Document.create({
@@ -72,16 +72,17 @@ const processPDF = async (documentId, filePath) => {
     try {
         const { text } = await extractTextFromPDF(filePath);
         const chunks = chunkText(text, 500, 50);
+        const maxChunks = Number.parseInt(process.env.MAX_CHUNKS || '', 10) || 3000;
+        const safeChunks = chunks.slice(0, maxChunks);
 
         // Update document 
         await Document.findByIdAndUpdate(documentId, {
             extractedText: text,
-            chunks: chunks,
+            chunks: safeChunks,
             status: 'ready'
         });
 
-        console.log(`Document ${documentId} processed successfully with ${chunks.length} chunks`);
-        await fs.unlink(filePath).catch(err => console.error('Error deleting file:', err));
+        console.log(`Document ${documentId} processed successfully with ${safeChunks.length} chunks`);
 
     } catch (error) {
         console.error('Error in processPDF:', error);
@@ -209,8 +210,17 @@ export const deleteDocument = async (req, res, next) => {
             }
         }
 
+        // Attempt to delete file if path exists
         if (fileToDelete) {
-            await fs.unlink(fileToDelete).catch(err => console.error('Error deleting file:', err));
+            try {
+                await fs.unlink(fileToDelete);
+            } catch (err) {
+                // Only log if it's not a "file not found" error
+                if (err.code !== 'ENOENT') {
+                    console.error('Error deleting file:', err);
+                }
+                // Continue with database deletion regardless
+            }
         }
 
         // Delete document record from database

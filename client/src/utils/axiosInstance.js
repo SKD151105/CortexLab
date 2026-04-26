@@ -5,7 +5,6 @@ const axiosInstance = axios.create({
     baseURL: BASE_URL,
     timeout: 80000,
     headers: {
-        "Content-Type": "application/json",
         Accept: "application/json",
     },
 });
@@ -13,6 +12,12 @@ const axiosInstance = axios.create({
 // Request Interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
+        if (config.data instanceof FormData) {
+            delete config.headers["Content-Type"];
+        } else {
+            config.headers["Content-Type"] = "application/json";
+        }
+
         const accessToken = localStorage.getItem("token");
         if (accessToken) {
             config.headers.Authorization = `Bearer ${accessToken}`;

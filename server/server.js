@@ -41,6 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads', 'documents')));
 
 // Routes 
 app.use('/api/auth', authRoutes);
