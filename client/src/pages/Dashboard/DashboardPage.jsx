@@ -126,8 +126,8 @@ const DashboardPage = () => {
           </div>
 
           {dashboardData.recentActivity &&
-          (dashboardData.recentActivity.documents.length > 0 ||
-            dashboardData.recentActivity.quizzes.length > 0) ? (
+          ((dashboardData.recentActivity.documents?.length || 0) > 0 ||
+            (dashboardData.recentActivity.quizzes?.length || 0) > 0) ? (
             <div className="space-y-3">
               {[
                 ...(dashboardData.recentActivity.documents || []).map(

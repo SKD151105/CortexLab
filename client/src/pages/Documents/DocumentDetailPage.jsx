@@ -6,6 +6,11 @@ import toast from "react-hot-toast";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import Tabs from "../../components/common/Tabs";
+import ChatInterface from "../../components/chat/ChatInterface";
+import { BASE_URL } from "../../utils/apiPaths";
+import AiActions from "../../components/AI/AiActions";
+import FlashcardManager from "../../components/flashcards/FlashcardManager";
+import QuizManager from "../../components/quizzes/QuizManager";
 
 const DocumentDetailPage = () => {
   const { id } = useParams();
@@ -39,7 +44,7 @@ const DocumentDetailPage = () => {
       return filePath;
     }
 
-    const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+    const baseUrl = BASE_URL;
     return `${baseUrl}${filePath.startsWith("/") ? "" : "/"}${filePath}`;
   };
 
@@ -72,7 +77,7 @@ const DocumentDetailPage = () => {
         <div className="bg-gray-100 p-1">
           <iframe
             src={pdfUrl}
-            className="w-full h-[70vh] bg-white rounded border border-gray-300"
+            className="w-full h-[78vh] min-h-[700px] bg-white rounded border border-gray-300"
             title="PDF Viewer"
             frameBorder="0"
             style={{
@@ -85,19 +90,19 @@ const DocumentDetailPage = () => {
   };
 
   const renderChat = () => {
-    return "renderChat";
+    return <ChatInterface />;
   };
 
   const renderAIActions = () => {
-    return "renderAIActions";
+    return <AiActions />;
   };
 
   const renderFlashcardsTab = () => {
-    return "renderFlashcardsTab";
+    return <FlashcardManager documentId={id} />;
   };
 
   const renderQuizzesTab = () => {
-    return "renderQuizzesTab";
+    return <QuizManager documentId={id} />;
   };
 
   const tabs = [
@@ -109,7 +114,11 @@ const DocumentDetailPage = () => {
   ];
 
   if (loading) {
-    return <Spinner />;
+    return (
+      <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
   if (!document) {
@@ -119,7 +128,10 @@ const DocumentDetailPage = () => {
   return (
     <div>
       <div className="mb-4">
-        <Link to="/documents" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+        <Link
+          to="/documents"
+          className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+        >
           <ArrowLeft size={16} />
           Back to Documents
         </Link>

@@ -1,14 +1,14 @@
 import React from "react";
 
 const Tabs = ({ tabs, activeTab, setActiveTab }) => {
-  return <div className="w-full">
-    <div className="relative border-b-2 border-slate-100">
-      <nav className="flex gap-2">
+  return <div className="w-full min-w-0">
+    <div className="relative border-b-2 border-slate-100 overflow-x-auto">
+      <nav className="flex min-w-max gap-1 sm:gap-2">
         {tabs.map((tab) => (
           <button
             key={tab.name}
             onClick={() => setActiveTab(tab.name)}
-            className={`relative pb-4 px-6 text-sm font-semibold transition-all duration-200 ${
+            className={`relative flex-none whitespace-nowrap pb-4 px-4 sm:px-6 text-sm font-semibold transition-all duration-200 ${
               activeTab === tab.name
                 ? 'text-emerald-600'
                 : 'text-slate-600 hover:text-slate-900'
@@ -25,7 +25,7 @@ const Tabs = ({ tabs, activeTab, setActiveTab }) => {
         ))}
       </nav>
     </div>
-    <div className="py-6">
+    <div className="pt-4 pb-0 sm:pt-6">
       {tabs.map((tab) => {
         if (tab.name === activeTab) {
           return (
