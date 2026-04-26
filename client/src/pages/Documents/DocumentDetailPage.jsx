@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import documentService from "../../services/documentService";
 import Spinner from "../../components/common/Spinner";
@@ -6,11 +6,20 @@ import toast from "react-hot-toast";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import Tabs from "../../components/common/Tabs";
-import ChatInterface from "../../components/chat/ChatInterface";
 import { BASE_URL } from "../../utils/apiPaths";
-import AiActions from "../../components/ai/AiActions";
-import FlashcardManager from "../../components/flashcards/FlashcardManager";
-import QuizManager from "../../components/quizzes/QuizManager";
+
+const ChatInterface = lazy(() => import("../../components/chat/ChatInterface"));
+const AiActions = lazy(() => import("../../components/ai/AiActions"));
+const FlashcardManager = lazy(() =>
+  import("../../components/flashcards/FlashcardManager"),
+);
+const QuizManager = lazy(() => import("../../components/quizzes/QuizManager"));
+
+const TabLoader = () => (
+  <div className="flex min-h-[20rem] items-center justify-center">
+    <Spinner />
+  </div>
+);
 
 const DocumentDetailPage = () => {
   const { id } = useParams();
@@ -98,19 +107,35 @@ const DocumentDetailPage = () => {
   };
 
   const renderChat = () => {
-    return <ChatInterface />;
+    return (
+      <Suspense fallback={<TabLoader />}>
+        <ChatInterface />
+      </Suspense>
+    );
   };
 
   const renderAIActions = () => {
-    return <AiActions />;
+    return (
+      <Suspense fallback={<TabLoader />}>
+        <AiActions />
+      </Suspense>
+    );
   };
 
   const renderFlashcardsTab = () => {
-    return <FlashcardManager documentId={id} />;
+    return (
+      <Suspense fallback={<TabLoader />}>
+        <FlashcardManager documentId={id} />
+      </Suspense>
+    );
   };
 
   const renderQuizzesTab = () => {
-    return <QuizManager documentId={id} />;
+    return (
+      <Suspense fallback={<TabLoader />}>
+        <QuizManager documentId={id} />
+      </Suspense>
+    );
   };
 
   const tabs = [

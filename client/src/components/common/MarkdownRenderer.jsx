@@ -1,7 +1,22 @@
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+let syntaxHighlighterLoader;
+
+const loadSyntaxHighlighter = () => {
+  if (!syntaxHighlighterLoader) {
+    syntaxHighlighterLoader = Promise.all([
+      import("react-syntax-highlighter"),
+      import("react-syntax-highlighter/dist/esm/styles/prism"),
+    ]).then(([syntaxModule, styleModule]) => ({
+      SyntaxHighlighter: syntaxModule.Prism,
+      style: styleModule.dracula,
+    }));
+  }
+
+  return syntaxHighlighterLoader;
+};
 
 const omitNode = (props) => {
   const cleanProps = { ...props };
@@ -9,7 +24,46 @@ const omitNode = (props) => {
   return cleanProps;
 };
 
-const MarkdownRenderer = ({content}) => {
+const CodeBlock = ({ children, language, ...props }) => {
+  const [syntaxHighlighter, setSyntaxHighlighter] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    loadSyntaxHighlighter().then((module) => {
+      if (isMounted) {
+        setSyntaxHighlighter(module);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (!syntaxHighlighter) {
+    return (
+      <pre className="bg-neutral-800 text-white p-3 rounded-md overflow-x-auto font-mono text-sm my-4">
+        <code {...props}>{children}</code>
+      </pre>
+    );
+  }
+
+  const { SyntaxHighlighter, style } = syntaxHighlighter;
+
+  return (
+    <SyntaxHighlighter
+      style={style}
+      language={language}
+      PreTag="div"
+      {...props}
+    >
+      {String(children).replace(/\n$/, "")}
+    </SyntaxHighlighter>
+  );
+};
+
+const MarkdownRenderer = ({ content }) => {
   return (
     <div className="text-neutral-700">
       <ReactMarkdown
@@ -28,17 +82,12 @@ const MarkdownRenderer = ({content}) => {
           em: (props) => <em className="italic" {...omitNode(props)} />,
           blockquote: (props) => <blockquote className="border-l-4 border-neutral-300 pl-4 italic text-neutral-600 my-4" {...omitNode(props)} />,
           code: ({ inline, className, children, ...props }) => {
-            const match = /language-(\w+)/.exec(className || '');
+            const match = /language-(\w+)/.exec(className || "");
             const cleanProps = omitNode(props);
             return !inline && match ? (
-              <SyntaxHighlighter
-                style={dracula}
-                language={match[1]}
-                PreTag="div"
-                {...cleanProps}
-              >
+              <CodeBlock language={match[1]} {...cleanProps}>
                 {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
+              </CodeBlock>
             ) : (
               <code className="bg-neutral-100 p-1 rounded font-mono text-sm" {...cleanProps}>
                 {children}
@@ -51,7 +100,7 @@ const MarkdownRenderer = ({content}) => {
         {content}
       </ReactMarkdown>
     </div>
-  )
-}
+  );
+};
 
-export default MarkdownRenderer
+export default MarkdownRenderer;
