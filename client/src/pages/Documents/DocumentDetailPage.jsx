@@ -8,7 +8,7 @@ import PageHeader from "../../components/common/PageHeader";
 import Tabs from "../../components/common/Tabs";
 import ChatInterface from "../../components/chat/ChatInterface";
 import { BASE_URL } from "../../utils/apiPaths";
-import AiActions from "../../components/AI/AiActions";
+import AiActions from "../../components/ai/AiActions";
 import FlashcardManager from "../../components/flashcards/FlashcardManager";
 import QuizManager from "../../components/quizzes/QuizManager";
 
