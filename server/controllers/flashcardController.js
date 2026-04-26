@@ -1,20 +1,36 @@
 import Flashcard from '../models/Flashcard.js';
+import {
+    buildPaginationMeta,
+    getPaginationParams,
+} from '../utils/pagination.js';
 
 // @desc    Get all flashcards for a document
 // @route   GET /api/flashcards/:documentId
 // @access  Private
 export const getFlashcards = async (req, res, next) => {
     try {
-        const flashcards = await Flashcard.find({
+        const { page, limit, skip } = getPaginationParams(req.query, {
+            limit: 6,
+            maxLimit: 20,
+        });
+        const filter = {
             userId: req.user._id,
-            documentId: req.params.documentId
-        })
-            .populate('documentId', 'title fileName')
-            .sort({ createdAt: -1 });
+            documentId: req.params.documentId,
+        };
+        const [flashcards, totalItems] = await Promise.all([
+            Flashcard.find(filter)
+                .populate('documentId', 'title fileName')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Flashcard.countDocuments(filter),
+        ]);
 
         res.status(200).json({
             success: true,
             count: flashcards.length,
+            pagination: buildPaginationMeta({ page, limit, totalItems }),
             data: flashcards
         });
 
@@ -28,13 +44,25 @@ export const getFlashcards = async (req, res, next) => {
 // @access  Private
 export const getAllFlashcardSets = async (req, res, next) => {
     try {
-        const flashcardSets = await Flashcard.find({ userId: req.user._id })
-            .populate('documentId', 'title')
-            .sort({ createdAt: -1 });
+        const { page, limit, skip } = getPaginationParams(req.query, {
+            limit: 12,
+            maxLimit: 50,
+        });
+        const filter = { userId: req.user._id };
+        const [flashcardSets, totalItems] = await Promise.all([
+            Flashcard.find(filter)
+                .populate('documentId', 'title')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Flashcard.countDocuments(filter),
+        ]);
 
         res.status(200).json({
             success: true,
             count: flashcardSets.length,
+            pagination: buildPaginationMeta({ page, limit, totalItems }),
             data: flashcardSets
         });
 

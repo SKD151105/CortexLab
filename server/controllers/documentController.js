@@ -6,6 +6,10 @@ import { chunkText } from "../utils/textChunker.js";
 import fs from "fs/promises";
 import path from "path";
 import mongoose from "mongoose";
+import {
+    buildPaginationMeta,
+    getPaginationParams,
+} from "../utils/pagination.js";
 
 // @desc Upload PDF document
 // @route POST /api/documents/upload
@@ -99,6 +103,11 @@ const processPDF = async (documentId, filePath) => {
 // @access Private
 export const getDocuments = async (req, res, next) => {
     try {
+        const { page, limit, skip } = getPaginationParams(req.query, {
+            limit: 12,
+            maxLimit: 50,
+        });
+
         const documents = await Document.aggregate([
             { $match: { userId: req.user._id } },
             {
@@ -131,13 +140,27 @@ export const getDocuments = async (req, res, next) => {
                     quizzes: 0
                 }
             },
-            { $sort: { uploadDate: -1 } }
+            {
+                $facet: {
+                    items: [
+                        { $sort: { uploadDate: -1 } },
+                        { $skip: skip },
+                        { $limit: limit },
+                    ],
+                    totalCount: [{ $count: "count" }],
+                },
+            },
         ]);
+
+        const items = documents[0]?.items || [];
+        const totalItems = documents[0]?.totalCount?.[0]?.count || 0;
+        const pagination = buildPaginationMeta({ page, limit, totalItems });
 
         res.status(200).json({
             success: true,
-            count: documents.length,
-            data: documents
+            count: items.length,
+            pagination,
+            data: items
         });
 
     } catch (error) {
@@ -150,7 +173,11 @@ export const getDocuments = async (req, res, next) => {
 // @access Private
 export const getDocument = async (req, res, next) => {
     try {
-        const document = await Document.findOne({ _id: req.params.id, userId: req.user._id });
+        const document = await Document.findOne({
+            _id: req.params.id,
+            userId: req.user._id,
+        }).lean();
+
         if (!document) {
             return res.status(404).json({
                 success: false,
@@ -159,15 +186,20 @@ export const getDocument = async (req, res, next) => {
         }
 
         // Get counts of associated flashcard sets and quizzes
-        const flashcardCount = await Flashcard.countDocuments({ documentId: document._id, userId: req.user._id });
-        const quizCount = await Quiz.countDocuments({ documentId: document._id, userId: req.user._id });
-
-        // Update last accessed date
-        document.lastAccessed = Date.now();
-        await document.save();
+        const [flashcardCount, quizCount] = await Promise.all([
+            Flashcard.countDocuments({ documentId: document._id, userId: req.user._id }),
+            Quiz.countDocuments({ documentId: document._id, userId: req.user._id }),
+            Document.updateOne(
+                { _id: document._id, userId: req.user._id },
+                { $set: { lastAccessed: new Date() } },
+            ),
+        ]);
 
         // Combine document data with counts
-        const documentData = document.toObject();
+        const documentData = {
+            ...document,
+            lastAccessed: new Date().toISOString(),
+        };
         documentData.flashcardCount = flashcardCount;
         documentData.quizCount = quizCount;
 

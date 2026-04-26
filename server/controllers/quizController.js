@@ -1,20 +1,36 @@
 import Quiz from '../models/Quiz.js';
+import {
+	buildPaginationMeta,
+	getPaginationParams,
+} from '../utils/pagination.js';
 
 // @desc    Get all quizzes for a document
 // @route   GET /api/quizzes/:documentId
 // @access  Private
 export const getQuizzes = async (req, res, next) => {
 	try {
-		const quizzes = await Quiz.find({
+		const { page, limit, skip } = getPaginationParams(req.query, {
+			limit: 8,
+			maxLimit: 24,
+		});
+		const filter = {
 			userId: req.user._id,
 			documentId: req.params.documentId
-		})
-			.populate('documentId', 'title fileName')
-			.sort({ createdAt: -1 });
+		};
+		const [quizzes, totalItems] = await Promise.all([
+			Quiz.find(filter)
+				.populate('documentId', 'title fileName')
+				.sort({ createdAt: -1 })
+				.skip(skip)
+				.limit(limit)
+				.lean(),
+			Quiz.countDocuments(filter),
+		]);
 
 		res.status(200).json({
 			success: true,
 			count: quizzes.length,
+			pagination: buildPaginationMeta({ page, limit, totalItems }),
 			data: quizzes
 		});
 
@@ -31,7 +47,7 @@ export const getQuizById = async (req, res, next) => {
 		const quiz = await Quiz.findOne({
 			_id: req.params.id,
 			userId: req.user._id
-		});
+		}).lean();
 
 		if (!quiz) {
 			return res.status(404).json({
@@ -137,7 +153,7 @@ export const getQuizResults = async (req, res, next) => {
 		const quiz = await Quiz.findOne({
 			_id: req.params.id,
 			userId: req.user._id
-		}).populate('documentId', 'title');
+		}).populate('documentId', 'title').lean();
 
 		if (!quiz) {
 			return res.status(404).json({

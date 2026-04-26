@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, Sparkles, TrendingUp } from "lucide-react";
-import moment from "moment";
+import { formatRelativeTime } from "../../utils/date";
 
 const FlashcardSetCard = ({ flashcardSet }) => {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ const FlashcardSetCard = ({ flashcardSet }) => {
               {flashcardSet?.documentId?.title}
             </h3>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-              Created {moment(flashcardSet.createdAt).fromNow()}
+              Created {formatRelativeTime(flashcardSet.createdAt)}
             </p>
           </div>
         </div>

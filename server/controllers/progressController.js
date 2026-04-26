@@ -10,13 +10,20 @@ export const getDashboard = async (req, res, next) => {
 		const userId = req.user._id;
 
 		// Get counts
-		const totalDocuments = await Document.countDocuments({ userId });
-		const totalFlashcardSets = await Flashcard.countDocuments({ userId });
-		const totalQuizzes = await Quiz.countDocuments({ userId });
-		const completedQuizzes = await Quiz.countDocuments({ userId, completedAt: { $ne: null } });
+		const [
+			totalDocuments,
+			totalFlashcardSets,
+			totalQuizzes,
+			completedQuizzes,
+		] = await Promise.all([
+			Document.countDocuments({ userId }),
+			Flashcard.countDocuments({ userId }),
+			Quiz.countDocuments({ userId }),
+			Quiz.countDocuments({ userId, completedAt: { $ne: null } }),
+		]);
 
 		// Get flashcard statistics
-		const flashcardSets = await Flashcard.find({ userId });
+		const flashcardSets = await Flashcard.find({ userId }).lean();
 		let totalFlashcards = 0;
 		let reviewedFlashcards = 0;
 		let starredFlashcards = 0;
@@ -28,7 +35,9 @@ export const getDashboard = async (req, res, next) => {
 		});
 
 		// Get quiz statistics
-		const quizzes = await Quiz.find({ userId, completedAt: { $ne: null } });
+		const quizzes = await Quiz.find({ userId, completedAt: { $ne: null } })
+			.select('score')
+			.lean();
 		const averageScore = quizzes.length > 0
 			? Math.round(quizzes.reduce((sum, q) => sum + q.score, 0) / quizzes.length)
 			: 0;
@@ -37,13 +46,15 @@ export const getDashboard = async (req, res, next) => {
 		const recentDocuments = await Document.find({ userId })
 			.sort({ lastAccessed: -1 })
 			.limit(5)
-			.select('title fileName lastAccessed status');
+			.select('title fileName lastAccessed status')
+			.lean();
 
 		const recentQuizzes = await Quiz.find({ userId })
 			.sort({ createdAt: -1 })
 			.limit(5)
 			.populate('documentId', 'title')
-			.select('title score totalQuestions completedAt');
+			.select('title score totalQuestions completedAt')
+			.lean();
 
 		// Study streak (simplified - in production, track daily activity)
 		const studyStreak = Math.floor(Math.random() * 7) + 1; // Mock data

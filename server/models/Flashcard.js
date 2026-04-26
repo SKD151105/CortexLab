@@ -42,6 +42,7 @@ const flashcardSchema = new mongoose.Schema(
 );
 
 flashcardSchema.index({ userId: 1, documentId: 1 });
+flashcardSchema.index({ userId: 1, createdAt: -1 });
 
 const Flashcard = mongoose.model("Flashcard", flashcardSchema);
 

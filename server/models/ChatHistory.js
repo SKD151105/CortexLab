@@ -36,6 +36,7 @@ const chatHistorySchema = new mongoose.Schema({
 
 // Index for faster queries
 chatHistorySchema.index({ userId: 1, documentId: 1 });
+chatHistorySchema.index({ userId: 1, updatedAt: -1 });
 
 const ChatHistory = mongoose.model('ChatHistory', chatHistorySchema);
 

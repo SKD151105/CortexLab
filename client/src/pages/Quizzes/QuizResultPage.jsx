@@ -1,33 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import quizService from '../../services/quizService';
 import PageHeader from '../../components/common/PageHeader';
 import Spinner from '../../components/common/Spinner';
-import toast from 'react-hot-toast';
 import { ArrowLeft, BookOpen, CheckCircle2, XCircle, Trophy, Target } from 'lucide-react';
+import { queryKeys } from '../../lib/queryKeys';
 
 const QuizResultPage = () => {
   const { quizId } = useParams();
   const [searchParams] = useSearchParams();
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(true);
   const returnTo = searchParams.get('returnTo');
 
-  useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const data = await quizService.getQuizResults(quizId);
-        setResults(data);
-      } catch (error) {
-        toast.error('Failed to fetch quiz results.');
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResults();
-  }, [quizId]);
+  const { data: results, isLoading: loading } = useQuery({
+    queryKey: queryKeys.quizResults(quizId),
+    queryFn: () => quizService.getQuizResults(quizId),
+    enabled: Boolean(quizId),
+  });
 
   if (loading) {
     return (

@@ -1,19 +1,31 @@
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
 
-const getAllFlashcardSets = async () => {
+const getAllFlashcardSets = async (params = {}) => {
 	try {
-		const response = await axiosInstance.get(API_PATHS.FLASHCARDS.GET_ALL_FLASHCARD_SETS);
-		return response.data;
+		const response = await axiosInstance.get(
+			API_PATHS.FLASHCARDS.GET_ALL_FLASHCARD_SETS,
+			{ params },
+		);
+		return {
+			items: response.data?.data || [],
+			pagination: response.data?.pagination || null,
+		};
 	} catch (error) {
 		throw error.response?.data || { message: 'Failed to fetch flashcard sets' };
 	}
 };
 
-const getFlashcardsForDocument = async (documentId) => {
+const getFlashcardsForDocument = async (documentId, params = {}) => {
 	try {
-		const response = await axiosInstance.get(API_PATHS.FLASHCARDS.GET_FLASHCARDS_FOR_DOC(documentId));
-		return response.data;
+		const response = await axiosInstance.get(
+			API_PATHS.FLASHCARDS.GET_FLASHCARDS_FOR_DOC(documentId),
+			{ params },
+		);
+		return {
+			items: response.data?.data || [],
+			pagination: response.data?.pagination || null,
+		};
 	} catch (error) {
 		throw error.response?.data || { message: 'Failed to fetch flashcards' };
 	}

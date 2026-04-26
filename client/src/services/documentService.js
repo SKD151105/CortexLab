@@ -1,10 +1,15 @@
 import axiosInstance from '../utils/axiosInstance';
 import { API_PATHS } from '../utils/apiPaths';
 
-const getDocuments = async () => {
+const getDocuments = async (params = {}) => {
 	try {
-		const response = await axiosInstance.get(API_PATHS.DOCUMENTS.GET_DOCUMENTS);
-		return response.data?.data;
+		const response = await axiosInstance.get(API_PATHS.DOCUMENTS.GET_DOCUMENTS, {
+			params,
+		});
+		return {
+			items: response.data?.data || [],
+			pagination: response.data?.pagination || null,
+		};
 	} catch (error) {
 		throw error.response?.data || { message: 'Failed to fetch documents' };
 	}

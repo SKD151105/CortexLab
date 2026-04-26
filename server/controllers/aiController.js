@@ -26,7 +26,7 @@ export const generateFlashcards = async (req, res, next) => {
         }
 
         const lookupTimer = log.timer('generateFlashcards.documentLookup', { documentId });
-        const document = await Document.findOne({ _id: documentId, userId: req.user._id, status: 'ready' });
+        const document = await Document.findOne({ _id: documentId, userId: req.user._id, status: 'ready' }).lean();
         lookupTimer.end({ found: !!document });
 
         if (!document) {
@@ -97,7 +97,7 @@ export const generateQuiz = async (req, res, next) => {
             _id: documentId,
             userId: req.user._id,
             status: 'ready'
-        });
+        }).lean();
         lookupTimer.end({ found: !!document });
 
         if (!document) {
@@ -172,7 +172,7 @@ export const generateSummary = async (req, res, next) => {
             _id: documentId,
             userId: req.user._id,
             status: 'ready'
-        });
+        }).lean();
         lookupTimer.end({ found: !!document });
 
         if (!document) {
@@ -234,7 +234,7 @@ export const chat = async (req, res, next) => {
             _id: documentId,
             userId: req.user._id,
             status: 'ready'
-        });
+        }).lean();
         lookupTimer.end({ found: !!document });
 
         if (!document) {
@@ -339,7 +339,7 @@ export const explainConcept = async (req, res, next) => {
             _id: documentId,
             userId: req.user._id,
             status: 'ready'
-        });
+        }).lean();
         lookupTimer.end({ found: !!document });
 
         if (!document) {
@@ -406,7 +406,7 @@ export const getChatHistory = async (req, res, next) => {
         const chatHistory = await ChatHistory.findOne({
             userId: req.user._id,
             documentId: documentId
-        }).select('messages');
+        }).select('messages').lean();
         historyTimer.end({ found: !!chatHistory, messageCount: chatHistory?.messages?.length || 0 });
 
         if (!chatHistory) {

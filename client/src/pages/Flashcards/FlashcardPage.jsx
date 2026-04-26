@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -17,49 +18,66 @@ import EmptyState from "../../components/common/EmptyState";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
 import Flashcard from "../../components/flashcards/Flashcard";
+import { queryKeys } from "../../lib/queryKeys";
 
 const FlashcardPage = () => {
   const { id: documentId } = useParams();
   const navigate = useNavigate();
-  const [flashcardSets, setFlashcardSets] = useState([]);
-  const [flashcards, setFlashcards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
-  const fetchFlashcards = async () => {
-    setLoading(true);
-    try {
-      const response = await flashcardService.getFlashcardsForDocument(
-        documentId
-      );
-      setFlashcardSets(response.data[0]);
-      setFlashcards(response.data[0]?.cards || []);
-    } catch (error) {
-      toast.error("Failed to fetch flashcards.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  const { data, isLoading: loading } = useQuery({
+    queryKey: queryKeys.flashcardsForDocument(documentId, { page: 1, limit: 1 }),
+    queryFn: () =>
+      flashcardService.getFlashcardsForDocument(documentId, { page: 1, limit: 1 }),
+    enabled: Boolean(documentId),
+  });
+
+  const flashcardSet = data?.items?.[0] || null;
+  const flashcards = useMemo(() => flashcardSet?.cards || [], [flashcardSet]);
+
+  const invalidateFlashcards = async () => {
+    await queryClient.invalidateQueries({
+      predicate: ({ queryKey }) =>
+        Array.isArray(queryKey) &&
+        queryKey[0] === "flashcards" &&
+        queryKey[1] === documentId,
+    });
+    await queryClient.invalidateQueries({
+      predicate: ({ queryKey }) =>
+        Array.isArray(queryKey) && queryKey[0] === "flashcard-sets",
+    });
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboard,
+    });
   };
 
-  useEffect(() => {
-    fetchFlashcards();
-  }, [documentId]);
+  const generateMutation = useMutation({
+    mutationFn: () => aiService.generateFlashcards(documentId),
+    onSuccess: async () => {
+      toast.success("Flashcards generated successfully!");
+      await invalidateFlashcards();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate flashcards.");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => flashcardService.deleteFlashcardSet(id),
+    onSuccess: async () => {
+      toast.success("Flashcard set deleted successfully!");
+      setIsDeleteModalOpen(false);
+      await invalidateFlashcards();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete flashcard set.");
+    },
+  });
 
   const handleGenerateFlashcards = async () => {
-    setGenerating(true);
-    try {
-      await aiService.generateFlashcards(documentId);
-      toast.success("Flashcards generated successfully!");
-      fetchFlashcards();
-    } catch (error) {
-      toast.error(error.message || "Failed to generate flashcards.");
-    } finally {
-      setGenerating(false);
-    }
+    generateMutation.mutate();
   };
 
   const handleNextCard = () => {
@@ -80,7 +98,7 @@ const FlashcardPage = () => {
 
     try {
       await flashcardService.reviewFlashcard(currentCard._id, index);
-    } catch (error) {
+    } catch {
       toast.error("Failed to review flashcard.");
     }
   };
@@ -88,29 +106,27 @@ const FlashcardPage = () => {
   const handleToggleStar = async (cardId) => {
     try {
       await flashcardService.toggleStar(cardId);
-      setFlashcards((prevFlashcards) =>
-        prevFlashcards.map((card) =>
-          card._id === cardId ? { ...card, isStarred: !card.isStarred } : card
-        )
+      queryClient.setQueryData(
+        queryKeys.flashcardsForDocument(documentId, { page: 1, limit: 1 }),
+        (existingData) => ({
+          ...existingData,
+          items: (existingData?.items || []).map((set) => ({
+            ...set,
+            cards: set.cards.map((card) =>
+              card._id === cardId ? { ...card, isStarred: !card.isStarred } : card,
+            ),
+          })),
+        }),
       );
       toast.success("Flashcard starred status updated!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update star status.");
     }
   };
 
   const handleDeleteFlashcardSet = async () => {
-    setDeleting(true);
-    try {
-      await flashcardService.deleteFlashcardSet(flashcardSets._id);
-      toast.success("Flashcard set deleted successfully!");
-      setIsDeleteModalOpen(false);
-      fetchFlashcards();
-    } catch (error) {
-      toast.error(error.message || "Failed to delete flashcard set.");
-    } finally {
-      setDeleting(false);
-    }
+    if (!flashcardSet?._id) return;
+    deleteMutation.mutate(flashcardSet._id);
   };
 
   const renderFlashcardContent = () => {
@@ -175,13 +191,13 @@ const FlashcardPage = () => {
             (flashcards.length > 0 ? (
               <Button
                 onClick={() => setIsDeleteModalOpen(true)}
-                disabled={deleting}
+                disabled={deleteMutation.isPending}
               >
                 <Trash2 size={16} /> Delete Set
               </Button>
             ) : (
-              <Button onClick={handleGenerateFlashcards} disabled={generating}>
-                {generating ? (
+              <Button onClick={handleGenerateFlashcards} disabled={generateMutation.isPending}>
+                {generateMutation.isPending ? (
                   <Spinner />
                 ) : (
                   <>
@@ -210,16 +226,16 @@ const FlashcardPage = () => {
               type="button"
               variant="secondary"
               onClick={() => setIsDeleteModalOpen(false)}
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleDeleteFlashcardSet}
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
               className="!bg-red-500 hover:!bg-red-600 active:!bg-red-700 focus:ring-red-500"
             >
-              {deleting ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </div>

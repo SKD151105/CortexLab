@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
 import quizService from "../../services/quizService.js";
@@ -9,77 +10,89 @@ import Button from "../common/Button.jsx";
 import Modal from "../common/Modal.jsx";
 import QuizCard from "./QuizCard.jsx";
 import EmptyState from "../common/EmptyState.jsx";
+import PaginationControls from "../common/PaginationControls.jsx";
+import { queryKeys } from "../../lib/queryKeys.js";
+
+const PAGE_SIZE = 8;
 
 const QuizManager = ({ documentId }) => {
-  const [quizzes, setQuizzes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [page, setPage] = useState(1);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [numQuestions, setNumQuestions] = useState(5);
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const queryClient = useQueryClient();
 
-  const fetchQuizzes = async (showLoader = true) => {
-    if (showLoader) {
-      setLoading(true);
-    }
+  const { data, isLoading: loading } = useQuery({
+    queryKey: queryKeys.quizzesForDocument(documentId, {
+      page,
+      limit: PAGE_SIZE,
+    }),
+    queryFn: () =>
+      quizService.getQuizzesForDocument(documentId, {
+        page,
+        limit: PAGE_SIZE,
+      }),
+    enabled: Boolean(documentId),
+    placeholderData: (previousData) => previousData,
+  });
 
-    try {
-      const data = await quizService.getQuizzesForDocument(documentId);
-      setQuizzes(data.data);
-    } catch (error) {
-      toast.error("Failed to fetch quizzes.");
-      console.error(error);
-    } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
-    }
+  const quizzes = data?.items || [];
+  const pagination = data?.pagination;
+
+  const invalidateQuizzes = async () => {
+    await queryClient.invalidateQueries({
+      predicate: ({ queryKey }) =>
+        Array.isArray(queryKey) &&
+        queryKey[0] === "quizzes" &&
+        queryKey[1] === documentId,
+    });
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboard,
+    });
   };
 
-  useEffect(() => {
-    if (!documentId) return;
+  const generateMutation = useMutation({
+    mutationFn: () => aiService.generateQuiz(documentId, { numQuestions }),
+    onSuccess: async () => {
+      toast.success("Quiz generated successfully!");
+      setIsGenerateModalOpen(false);
+      setPage(1);
+      await invalidateQuizzes();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate quiz.");
+    },
+  });
 
-    let isMounted = true;
+  const deleteMutation = useMutation({
+    mutationFn: (quizId) => quizService.deleteQuiz(quizId),
+    onSuccess: async (_, quizId) => {
+      toast.success(`'${selectedQuiz?.title || "Quiz"}' deleted.`);
+      setIsDeleteModalOpen(false);
+      setSelectedQuiz(null);
 
-    const loadQuizzes = async () => {
-      try {
-        const data = await quizService.getQuizzesForDocument(documentId);
-        if (!isMounted) return;
-        setQuizzes(data.data);
-      } catch (error) {
-        if (!isMounted) return;
-        toast.error("Failed to fetch quizzes.");
-        console.error(error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
+      queryClient.setQueryData(
+        queryKeys.quizzesForDocument(documentId, { page, limit: PAGE_SIZE }),
+        (existingData) =>
+          existingData
+            ? {
+                ...existingData,
+                items: (existingData.items || []).filter((quiz) => quiz._id !== quizId),
+              }
+            : existingData,
+      );
 
-    loadQuizzes();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [documentId]);
+      await invalidateQuizzes();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete quiz.");
+    },
+  });
 
   const handleGenerateQuiz = async (e) => {
     e.preventDefault();
-    setGenerating(true);
-    try {
-      await aiService.generateQuiz(documentId, { numQuestions });
-      toast.success("Quiz generated successfully!");
-      setIsGenerateModalOpen(false);
-      fetchQuizzes();
-    } catch (error) {
-      toast.error(error.message || "Failed to generate quiz.");
-    } finally {
-      setGenerating(false);
-    }
+    generateMutation.mutate();
   };
 
   const handleDeleteRequest = (quiz) => {
@@ -89,18 +102,7 @@ const QuizManager = ({ documentId }) => {
 
   const handleConfirmDelete = async () => {
     if (!selectedQuiz) return;
-    setDeleting(true);
-    try {
-      await quizService.deleteQuiz(selectedQuiz._id);
-      toast.success(`'${selectedQuiz.title || "Quiz"}' deleted.`);
-      setIsDeleteModalOpen(false);
-      setSelectedQuiz(null);
-      setQuizzes(quizzes.filter((q) => q._id !== selectedQuiz._id));
-    } catch (error) {
-      toast.error(error.message || "Failed to delete quiz.");
-    } finally {
-      setDeleting(false);
-    }
+    deleteMutation.mutate(selectedQuiz._id);
   };
 
   const renderQuizContent = () => {
@@ -118,16 +120,25 @@ const QuizManager = ({ documentId }) => {
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {quizzes.map((quiz) => (
-          <QuizCard
-            key={quiz._id}
-            quiz={quiz}
-            documentId={documentId}
-            onDelete={handleDeleteRequest}
-          />
-        ))}
-      </div>
+      <>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {quizzes.map((quiz) => (
+            <QuizCard
+              key={quiz._id}
+              quiz={quiz}
+              documentId={documentId}
+              onDelete={handleDeleteRequest}
+            />
+          ))}
+        </div>
+        <PaginationControls
+          page={pagination?.page || page}
+          totalPages={pagination?.totalPages || 1}
+          hasNextPage={pagination?.hasNextPage}
+          hasPreviousPage={pagination?.hasPreviousPage}
+          onPageChange={setPage}
+        />
+      </>
     );
   };
 
@@ -142,7 +153,6 @@ const QuizManager = ({ documentId }) => {
 
       {renderQuizContent()}
 
-      {/* Generate Quiz */}
       <Modal
         isOpen={isGenerateModalOpen}
         onClose={() => setIsGenerateModalOpen(false)}
@@ -157,7 +167,7 @@ const QuizManager = ({ documentId }) => {
               type="number"
               value={numQuestions}
               onChange={(e) =>
-                setNumQuestions(Math.max(1, parseInt(e.target.value) || 1))
+                setNumQuestions(Math.max(1, parseInt(e.target.value, 10) || 1))
               }
               min="1"
               required
@@ -169,18 +179,17 @@ const QuizManager = ({ documentId }) => {
               type="button"
               variant="secondary"
               onClick={() => setIsGenerateModalOpen(false)}
-              disabled={generating}
+              disabled={generateMutation.isPending}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={generating}>
-              {generating ? "Generating..." : "Generate"}
+            <Button type="submit" disabled={generateMutation.isPending}>
+              {generateMutation.isPending ? "Generating..." : "Generate"}
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Confirmation */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -199,16 +208,16 @@ const QuizManager = ({ documentId }) => {
               type="button"
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
               className="bg-red-500 hover:bg-red-600 active:bg-red-700 focus:ring-red-500"
             >
-              {deleting ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FileText, Trash2, BookOpen, BrainCircuit, Clock } from "lucide-react";
-import moment from "moment";
+import { formatRelativeTime } from "../../utils/date";
 
 // Helper function to format file size
 const formatFileSize = (bytes) => {
@@ -97,7 +97,7 @@ const DocumentCard = ({ document, onDelete }) => {
       <div className="mt-5 pt-4 border-t border-slate-100">
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
           <Clock className="w-3.5 h-3.5" strokeWidth={2} />
-          <span>Uploaded {moment(document.createdAt).fromNow()}</span>
+          <span>Uploaded {formatRelativeTime(document.createdAt)}</span>
         </div>
       </div>
 

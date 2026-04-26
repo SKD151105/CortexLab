@@ -60,6 +60,8 @@ const documentSchema = new mongoose.Schema({
 
 // Index for faster queries
 documentSchema.index({ userId: 1, uploadDate: -1 });
+documentSchema.index({ userId: 1, lastAccessed: -1 });
+documentSchema.index({ userId: 1, status: 1, uploadDate: -1 });
 
 const Document = mongoose.model('Document', documentSchema);
 

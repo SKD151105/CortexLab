@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Spinner from "../../components/common/Spinner.jsx";
 import progressService from "../../services/progressService.js";
-import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
 import {
   FileText,
   BookOpen,
@@ -10,27 +9,40 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react";
+import { queryKeys } from "../../lib/queryKeys.js";
+import { formatDateTime } from "../../utils/date.js";
 
 const DashboardPage = () => {
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: dashboardData,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.dashboard,
+    queryFn: progressService.getDashboardData,
+  });
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const data = await progressService.getDashboardData();
-        console.log("Data___getDashboardData:", data);
+  const recentActivities = useMemo(() => {
+    if (!dashboardData?.recentActivity) {
+      return [];
+    }
 
-        setDashboardData(data);
-      } catch (error) {
-        toast.error("Failed to load dashboard data.");
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
-  }, []);
+    return [
+      ...(dashboardData.recentActivity.documents || []).map((doc) => ({
+        id: doc._id,
+        description: doc.title,
+        timestamp: doc.lastAccessed,
+        link: `/documents/${doc._id}`,
+        type: "document",
+      })),
+      ...(dashboardData.recentActivity.quizzes || []).map((quiz) => ({
+        id: quiz._id,
+        description: quiz.title,
+        timestamp: quiz.completedAt,
+        link: `/quizzes/${quiz._id}/results`,
+        type: "quiz",
+      })),
+    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }, [dashboardData]);
 
   if (loading) {
     return <Spinner />;
@@ -125,30 +137,9 @@ const DashboardPage = () => {
             </h3>
           </div>
 
-          {dashboardData.recentActivity &&
-          ((dashboardData.recentActivity.documents?.length || 0) > 0 ||
-            (dashboardData.recentActivity.quizzes?.length || 0) > 0) ? (
+          {recentActivities.length > 0 ? (
             <div className="space-y-3">
-              {[
-                ...(dashboardData.recentActivity.documents || []).map(
-                  (doc) => ({
-                    id: doc._id,
-                    description: doc.title,
-                    timestamp: doc.lastAccessed,
-                    link: `/documents/${doc._id}`,
-                    type: "document",
-                  }),
-                ),
-                ...(dashboardData.recentActivity.quizzes || []).map((quiz) => ({
-                  id: quiz._id,
-                  description: quiz.title,
-                  timestamp: quiz.lastAttempted,
-                  link: `/quizzes/${quiz._id}`,
-                  type: "quiz",
-                })),
-              ]
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .map((activity, index) => (
+              {recentActivities.map((activity, index) => (
                   <div
                     key={activity.id || index}
                     className="group flex items-center justify-between p-4 rounded-xl bg-slate-50/50 border border-slate-200/60 hover:bg-white hover:border-slate-300/60 hover:shadow-md transition-all duration-200"
@@ -172,7 +163,7 @@ const DashboardPage = () => {
                         </p>
                       </div>
                       <p className="text-xs text-slate-500 pl-4">
-                        {new Date(activity.timestamp).toLocaleString()}
+                        {formatDateTime(activity.timestamp)}
                       </p>
                     </div>
                     {activity.link && (

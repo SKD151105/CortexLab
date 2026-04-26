@@ -1,60 +1,88 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, Plus, Upload, X, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "../../components/common/Button.jsx";
 import DocumentCard from "../../components/documents/DocumentCard.jsx";
 import Spinner from "../../components/common/Spinner";
+import PaginationControls from "../../components/common/PaginationControls.jsx";
+import { queryKeys } from "../../lib/queryKeys.js";
 import documentService from "../../services/documentService";
 
 const MAX_UPLOAD_SIZE_BYTES = 40 * 1024 * 1024;
+const PAGE_SIZE = 12;
 
 const DocumentListPage = () => {
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const [page, setPage] = useState(1);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadTitle, setUploadTitle] = useState("");
-  const [uploading, setUploading] = useState(false);
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const queryClient = useQueryClient();
 
-  const fetchDocuments = useCallback(async () => {
-    try {
-      const data = await documentService.getDocuments();
-      setDocuments(data);
-    } catch (error) {
-      toast.error("Failed to fetch documents.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.documents({ page, limit: PAGE_SIZE }),
+    queryFn: () => documentService.getDocuments({ page, limit: PAGE_SIZE }),
+    placeholderData: (previousData) => previousData,
+  });
 
-  useEffect(() => {
-    let isMounted = true;
+  const documents = data?.items || [];
+  const pagination = data?.pagination;
 
-    const loadDocuments = async () => {
-      try {
-        const data = await documentService.getDocuments();
-        if (isMounted) setDocuments(data);
-      } catch (error) {
-        if (isMounted) toast.error("Failed to fetch documents.");
-        console.error(error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
+  const invalidateDocuments = async () => {
+    await queryClient.invalidateQueries({
+      predicate: ({ queryKey }) =>
+        Array.isArray(queryKey) && queryKey[0] === "documents",
+    });
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboard,
+    });
+  };
 
-    loadDocuments();
+  const uploadMutation = useMutation({
+    mutationFn: (formData) => documentService.uploadDocument(formData),
+    onSuccess: async () => {
+      toast.success("Document uploaded successfully!");
+      setIsUploadModalOpen(false);
+      setUploadFile(null);
+      setUploadTitle("");
+      setPage(1);
+      await invalidateDocuments();
+    },
+    onError: (error) => {
+      toast.error(error?.message || error?.error || "Upload failed.");
+    },
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id) => documentService.deleteDocument(id),
+    onSuccess: async (_, id) => {
+      toast.success(`'${selectedDoc?.title || "Document"}' deleted.`);
+      setIsDeleteModalOpen(false);
+      setSelectedDoc(null);
+
+      queryClient.setQueryData(
+        queryKeys.documents({ page, limit: PAGE_SIZE }),
+        (existingData) =>
+          existingData
+            ? {
+                ...existingData,
+                items: (existingData.items || []).filter((doc) => doc._id !== id),
+              }
+            : existingData,
+      );
+
+      await invalidateDocuments();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete document.");
+    },
+  });
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -89,24 +117,10 @@ const DocumentListPage = () => {
       return;
     }
 
-    setUploading(true);
     const formData = new FormData();
     formData.append("file", uploadFile);
     formData.append("title", uploadTitle);
-
-    try {
-      await documentService.uploadDocument(formData);
-      toast.success("Document uploaded successfully!");
-      setIsUploadModalOpen(false);
-      setUploadFile(null);
-      setUploadTitle("");
-      setLoading(true);
-      fetchDocuments();
-    } catch (error) {
-      toast.error(error?.message || error?.error || "Upload failed.");
-    } finally {
-      setUploading(false);
-    }
+    uploadMutation.mutate(formData);
   };
 
   const handleDeleteRequest = (doc) => {
@@ -116,18 +130,7 @@ const DocumentListPage = () => {
 
   const handleConfirmDelete = async () => {
     if (!selectedDoc) return;
-    setDeleting(true);
-    try {
-      await documentService.deleteDocument(selectedDoc._id);
-      toast.success(`'${selectedDoc.title}' deleted.`);
-      setIsDeleteModalOpen(false);
-      setSelectedDoc(null);
-      setDocuments(documents.filter((d) => d._id !== selectedDoc._id));
-    } catch (error) {
-      toast.error(error.message || "Failed to delete document.");
-    } finally {
-      setDeleting(false);
-    }
+    deleteMutation.mutate(selectedDoc._id);
   };
 
   const renderContent = () => {
@@ -169,15 +172,24 @@ const DocumentListPage = () => {
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {documents?.map((doc) => (
-          <DocumentCard
-            key={doc._id}
-            document={doc}
-            onDelete={handleDeleteRequest}
-          />
-        ))}
-      </div>
+      <>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {documents.map((doc) => (
+            <DocumentCard
+              key={doc._id}
+              document={doc}
+              onDelete={handleDeleteRequest}
+            />
+          ))}
+        </div>
+        <PaginationControls
+          page={pagination?.page || page}
+          totalPages={pagination?.totalPages || 1}
+          hasNextPage={pagination?.hasNextPage}
+          hasPreviousPage={pagination?.hasPreviousPage}
+          onPageChange={setPage}
+        />
+      </>
     );
   };
 
@@ -195,7 +207,7 @@ const DocumentListPage = () => {
               Manage and organize your learning materials
             </p>
           </div>
-          {documents.length > 0 && (
+          {(pagination?.totalItems || documents.length) > 0 && (
             <Button onClick={() => setIsUploadModalOpen(true)}>
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               Upload Document
@@ -290,17 +302,17 @@ const DocumentListPage = () => {
                     setUploadFile(null);
                     setUploadTitle("");
                   }}
-                  disabled={uploading}
+                  disabled={uploadMutation.isPending}
                   className="flex-1 h-11 px-4 border-2 border-slate-200 rounded-xl bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={uploading}
+                  disabled={uploadMutation.isPending}
                   className="flex-1 h-11 px-4 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
-                  {uploading ? (
+                  {uploadMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Uploading...
@@ -328,7 +340,6 @@ const DocumentListPage = () => {
               <X className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* Modal Header */}
             <div className="mb-6">
               <div className="w-12 h-12 rounded-xl bg-linear-to-r from-red-100 to-red-200 flex items-center justify-center mb-4">
                 <Trash2 className="w-6 h-6 text-red-600" strokeWidth={2} />
@@ -338,7 +349,6 @@ const DocumentListPage = () => {
               </h2>
             </div>
 
-            {/* Content */}
             <p className="text-sm text-slate-600 mb-6">
               Are you sure you want to delete the document:{" "}
               <span className="font-semibold text-slate-900">
@@ -347,7 +357,6 @@ const DocumentListPage = () => {
               ? This action cannot be undone.
             </p>
 
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 type="button"
@@ -355,17 +364,17 @@ const DocumentListPage = () => {
                   setIsDeleteModalOpen(false);
                   setSelectedDoc(null);
                 }}
-                disabled={deleting}
+                disabled={deleteMutation.isPending}
                 className="flex-1 h-11 px-4 border-2 border-slate-200 rounded-xl bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                disabled={deleting}
+                disabled={deleteMutation.isPending}
                 className="flex-1 h-11 px-4 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
               >
-                {deleting ? (
+                {deleteMutation.isPending ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Deleting...
