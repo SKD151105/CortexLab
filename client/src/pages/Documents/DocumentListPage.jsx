@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { io } from "socket.io-client";
+import { BASE_URL } from "../../utils/apiPaths";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, Plus, Upload, X, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -13,6 +15,8 @@ import documentService from "../../services/documentService";
 const MAX_UPLOAD_SIZE_BYTES = 40 * 1024 * 1024;
 const PAGE_SIZE = 12;
 
+const POLL_INTERVAL = 2000; // 2 seconds
+
 const DocumentListPage = () => {
   const [page, setPage] = useState(1);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -20,6 +24,7 @@ const DocumentListPage = () => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const pollTimeoutRef = useRef(null);
   const queryClient = useQueryClient();
 
   const {
@@ -44,15 +49,41 @@ const DocumentListPage = () => {
     });
   };
 
+
+  // --- SOCKET.IO REAL-TIME UPDATES ---
+  useEffect(() => {
+    // Connect to backend socket.io server
+    const socket = io(BASE_URL, {
+      transports: ["websocket"],
+      autoConnect: true,
+    });
+
+    // Listen for document ready events
+    socket.on("document:ready", (payload) => {
+      // Optionally, filter by userId if you want per-user notifications
+      invalidateDocuments();
+      toast.success("A new document is ready!");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  // Remove polling logic (now handled by socket.io)
+  const startPollingForNewDoc = () => {};
+  const stopPolling = () => {};
+
   const uploadMutation = useMutation({
     mutationFn: (formData) => documentService.uploadDocument(formData),
     onSuccess: async () => {
-      toast.success("Document uploaded successfully!");
+      toast.success("Document uploaded! Processing...");
       setIsUploadModalOpen(false);
       setUploadFile(null);
       setUploadTitle("");
       setPage(1);
-      await invalidateDocuments();
+      startPollingForNewDoc();
     },
     onError: (error) => {
       toast.error(error?.message || error?.error || "Upload failed.");
@@ -132,6 +163,26 @@ const DocumentListPage = () => {
     if (!selectedDoc) return;
     deleteMutation.mutate(selectedDoc._id);
   };
+
+  // Stop polling if the document count increases (new doc appears)
+  React.useEffect(() => {
+    if (pollTimeoutRef.current && documents.length > 0) {
+      // Find if any document was uploaded very recently (e.g., within 1 minute)
+      const now = Date.now();
+      const justUploaded = documents.some((doc) => {
+        if (!doc.createdAt) return false;
+        const created = new Date(doc.createdAt).getTime();
+        return now - created < 60 * 1000; // 1 minute
+      });
+      if (justUploaded) {
+        stopPolling();
+        toast.success("Document is ready!");
+      }
+    }
+    // Cleanup on unmount
+    return () => stopPolling();
+    // eslint-disable-next-line
+  }, [documents.length]);
 
   const renderContent = () => {
     if (loading) {

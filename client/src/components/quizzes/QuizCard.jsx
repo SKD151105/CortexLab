@@ -42,23 +42,25 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 				</div>
 
 				{/* Quiz Info */}
-				<div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-					<div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
-						<span className="text-sm font-semibold text-slate-700">
-							{quiz.questions.length}{' '}
-							{quiz.questions.length === 1 ? 'Question' : 'Questions'}
-						</span>
-					</div>
-					<Link to={quizTakePath} className="flex-1">
-						<button className="group/btn relative w-full h-9 px-3 bg-linear-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-lg shadow-lime-500/25 active:scale-95 overflow-hidden">
-							<span className="relative z-10 flex items-center justify-center gap-2">
-								<Play className="w-3.5 h-3.5" strokeWidth={2.5} />
-								Retry Quiz
-							</span>
-							<div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-						</button>
-					</Link>
-				</div>
+				   <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+					   <div className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+						   <span className="text-sm font-semibold text-slate-700">
+							   {quiz.questions.length}{' '}
+							   {quiz.questions.length === 1 ? 'Question' : 'Questions'}
+						   </span>
+					   </div>
+					   {quiz?.userAnswers?.length > 0 && (
+						   <Link to={quizTakePath} className="flex-1">
+							   <button className="group/btn relative w-full h-9 px-3 bg-linear-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-lg shadow-lime-500/25 active:scale-95 overflow-hidden">
+								   <span className="relative z-10 flex items-center justify-center gap-2">
+									   <Play className="w-3.5 h-3.5" strokeWidth={2.5} />
+									   Retry Quiz
+								   </span>
+								   <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
+							   </button>
+						   </Link>
+					   )}
+				   </div>
 			</div>
 
 			{/* Action Button */}

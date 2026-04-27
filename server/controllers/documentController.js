@@ -72,6 +72,7 @@ export const uploadDocument = async (req, res, next) => {
 };
 
 // Helper function to process PDF, extract text, chunk it, and update the document record
+import { getIO } from "../socket.js";
 const processPDF = async (documentId, filePath) => {
     try {
         const { text } = await extractTextFromPDF(filePath);
@@ -80,11 +81,19 @@ const processPDF = async (documentId, filePath) => {
         const safeChunks = chunks.slice(0, maxChunks);
 
         // Update document 
-        await Document.findByIdAndUpdate(documentId, {
+        const updatedDoc = await Document.findByIdAndUpdate(documentId, {
             extractedText: text,
             chunks: safeChunks,
             status: 'ready'
-        });
+        }, { new: true });
+
+        // Emit websocket event to notify client
+        try {
+          const io = getIO();
+          io.emit("document:ready", { documentId: updatedDoc._id, userId: updatedDoc.userId });
+        } catch (e) {
+          // Socket not initialized or error
+        }
 
         console.log(`Document ${documentId} processed successfully with ${safeChunks.length} chunks`);
 

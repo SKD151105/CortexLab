@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../lib/queryKeys";
 import quizService from "../../services/quizService";
 import PageHeader from "../../components/common/PageHeader";
 import Spinner from "../../components/common/Spinner";
@@ -10,6 +12,7 @@ import Modal from "../../components/common/Modal";
 
 const QuizTakePage = () => {
   const { quizId } = useParams();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [quiz, setQuiz] = useState(null);
@@ -80,6 +83,14 @@ const QuizTakePage = () => {
     try {
       await quizService.submitQuiz(quizId, formattedAnswers);
       toast.success("Quiz submitted successfully.");
+      // Invalidate quizzes list for the parent document so UI updates
+      const documentId = quiz?.documentId || quiz?.document?._id;
+      if (documentId) {
+        await queryClient.invalidateQueries({
+          predicate: ({ queryKey }) =>
+            Array.isArray(queryKey) && queryKey[0] === "quizzes" && queryKey[1] === documentId,
+        });
+      }
       const resultsPath = returnTo
         ? `/quizzes/${quizId}/results?returnTo=${encodeURIComponent(returnTo)}`
         : `/quizzes/${quizId}/results`;

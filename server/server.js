@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
@@ -24,6 +25,13 @@ const __dirname = path.dirname(__filename);
 // Initialize Express app
 const app = express();
 app.set('trust proxy', 1);
+
+// Create HTTP server for socket.io
+const server = http.createServer(app);
+
+// Socket.io setup
+import { initSocket } from './socket.js';
+initSocket(server);
 
 // Connect to MongoDB
 connectDB();
@@ -77,9 +85,10 @@ app.use((req, res, next) => {
     });
 });
 
+
 // Start the server
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
