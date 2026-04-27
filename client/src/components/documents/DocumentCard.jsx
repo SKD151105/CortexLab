@@ -19,6 +19,17 @@ const formatFileSize = (bytes) => {
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 };
 
+import { BASE_URL } from "../../utils/apiPaths";
+
+// Helper to get the correct file URL (works for both local and deployed)
+const getDocumentFileUrl = (filePath) => {
+  if (!filePath) return "";
+  if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+    return filePath;
+  }
+  return `${BASE_URL}${filePath.startsWith("/") ? "" : "/"}${filePath}`;
+};
+
 const DocumentCard = ({ document, onDelete }) => {
   const navigate = useNavigate();
 
@@ -30,6 +41,9 @@ const DocumentCard = ({ document, onDelete }) => {
     e.stopPropagation();
     onDelete(document);
   };
+
+  // If you want to show a download/view link, use this:
+  // const fileUrl = getDocumentFileUrl(document.filePath);
 
   return (
     <div

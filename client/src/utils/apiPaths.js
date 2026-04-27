@@ -1,5 +1,5 @@
 export const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+	import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"; // Set this to your backend's public URL in production, e.g. https://your-backend.onrender.com
 
 export const API_PATHS = {
 	AUTH: {
