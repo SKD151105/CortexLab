@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="https://capsule-render.vercel.app/api?type=waving&height=240&color=0:0f172a,30:1d4ed8,65:0ea5e9,100:14b8a6&text=CortexLab&fontSize=56&fontColor=ffffff&fontAlignY=38&desc=Transform%20PDFs%20into%20Interactive%20AI%20Learning%20Experiences&descAlignY=58" alt="CortexLab banner" />
+	<img src="./assets/cortexlab-banner.svg" alt="CortexLab banner" />
 </p>
 
 <p align="center">
