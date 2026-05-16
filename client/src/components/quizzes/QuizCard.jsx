@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play, BarChart2, Trash2, Award } from 'lucide-react';
 import { formatDate } from '../../utils/date';
@@ -9,7 +9,7 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 	const quizResultsPath = `/quizzes/${quiz._id}/results?returnTo=${encodeURIComponent(returnTo)}`;
 
 	return (
-		<div className="group relative bg-white/80 backdrop-blur-xl border-2 border-slate-200 hover:border-emerald-300 rounded-2xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/10 flex flex-col justify-between">
+		<div className="group relative bg-white/80 backdrop-blur-xl border-2 border-slate-200 hover:border-indigo-300 rounded-2xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between">
 			<button
 				onClick={(e) => {
 					e.stopPropagation();
@@ -23,9 +23,9 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 			<div className="space-y-4">
 				{/* Status Badge */}
 				<div className="inline-flex items-center gap-1.5 py-1 rounded-lg text-xs font-semibold">
-					<div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1">
-						<Award className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
-						<span className="text-emerald-700">Score: {quiz?.score}</span>
+					<div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-1">
+						<Award className="w-3.5 h-3.5 text-indigo-600" strokeWidth={2.5} />
+						<span className="text-indigo-700">Score: {quiz?.score}</span>
 					</div>
 				</div>
 
@@ -51,7 +51,7 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 					   </div>
 					   {quiz?.userAnswers?.length > 0 && (
 						   <Link to={quizTakePath} className="flex-1">
-							   <button className="group/btn relative w-full h-9 px-3 bg-linear-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-lg shadow-lime-500/25 active:scale-95 overflow-hidden">
+							   <button className="group/btn relative w-full h-9 px-3 bg-linear-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-lg shadow-sky-500/25 active:scale-95 overflow-hidden">
 								   <span className="relative z-10 flex items-center justify-center gap-2">
 									   <Play className="w-3.5 h-3.5" strokeWidth={2.5} />
 									   Retry Quiz
@@ -75,7 +75,7 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 					</Link>
 				) : (
 					<Link to={quizTakePath}>
-						<button className="group/btn relative w-full h-11 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25 active:scale-95 overflow-hidden">
+						<button className="group/btn relative w-full h-11 bg-linear-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 active:scale-95 overflow-hidden">
 							<span className="relative z-10 flex items-center justify-center gap-2">
 								<Play className="w-4 h-4" strokeWidth={2.5} />
 								Start Quiz
@@ -90,3 +90,4 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 };
 
 export default QuizCard;
+

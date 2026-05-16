@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Bell, User, Menu } from "lucide-react";
 
@@ -26,13 +26,13 @@ const Header = ({ toggleSidebar }) => {
             className="group-hover:scale-110 transition-transform duration-200"
           />
 
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full ring-2 ring-white"></span>
         </button>
 
         {/* User Profile */}
         <div className="flex items-center gap-3 ml-3 pl-3 border-l border-slate-200/60">
           <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors duration-200 cursor-pointer group">
-            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:shadow-lg group-hover:shadow-emerald-500/30 transition-all duration-200">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:shadow-lg group-hover:shadow-indigo-500/30 transition-all duration-200">
               <User size={18} strokeWidth={2.5} />
             </div>
             <div>
@@ -51,3 +51,4 @@ const Header = ({ toggleSidebar }) => {
 };
 
 export default Header;
+

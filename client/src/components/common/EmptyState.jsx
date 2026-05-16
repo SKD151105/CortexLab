@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { FileText, Plus } from "lucide-react";
 
 const EmptyState = ({ onActionClick, title, description, buttonText }) => {
@@ -14,7 +14,7 @@ const EmptyState = ({ onActionClick, title, description, buttonText }) => {
       {buttonText && onActionClick && (
         <button
           onClick={onActionClick}
-          className="group relative inline-flex items-center gap-2 px-6 h-11 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25 active:scale-95 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 overflow-hidden"
+          className="group relative inline-flex items-center gap-2 px-6 h-11 bg-linear-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 overflow-hidden"
         >
           <span className="relative z-10 flex items-center gap-2">
             <Plus className="w-4 h-4" strokeWidth={2.5} />
@@ -28,3 +28,4 @@ const EmptyState = ({ onActionClick, title, description, buttonText }) => {
 };
 
 export default EmptyState;
+

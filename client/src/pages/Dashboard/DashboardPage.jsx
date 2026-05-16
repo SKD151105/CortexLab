@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Spinner from "../../components/common/Spinner.jsx";
 import progressService from "../../services/progressService.js";
@@ -74,14 +74,14 @@ const DashboardPage = () => {
       value: dashboardData.overview.totalFlashcards,
       icon: BookOpen,
       gradient: "from-purple-400 to-pink-500",
-      shadowColor: "shadow-purple-500/25",
+      shadowColor: "shadow-indigo-500/25",
     },
     {
       label: "Total Quizzes",
       value: dashboardData.overview.totalQuizzes,
       icon: BrainCircuit,
-      gradient: "from-emerald-400 to-teal-500",
-      shadowColor: "shadow-emerald-500/25",
+      gradient: "from-indigo-400 to-violet-500",
+      shadowColor: "shadow-indigo-500/25",
     },
   ];
 
@@ -150,7 +150,7 @@ const DashboardPage = () => {
                           className={`w-2 h-2 rounded-full ${
                             activity.type === "document"
                               ? "bg-linear-to-r from-blue-400 to-cyan-500"
-                              : "bg-linear-to-r from-emerald-400 to-teal-500"
+                              : "bg-linear-to-r from-indigo-400 to-violet-500"
                           }`}
                         />
                         <p className="text-sm font-medium text-slate-900 truncate">
@@ -169,7 +169,7 @@ const DashboardPage = () => {
                     {activity.link && (
                       <a
                         href={activity.link}
-                        className="ml-4 px-4 py-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all duation-200 whitespace-nowrap"
+                        className="ml-4 px-4 py-2 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all duration-200 whitespace-nowrap"
                       >
                         View
                       </a>
@@ -195,3 +195,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

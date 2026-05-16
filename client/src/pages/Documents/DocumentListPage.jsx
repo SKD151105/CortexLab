@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect } from "react";
 import { io } from "socket.io-client";
 import { BASE_URL } from "../../utils/apiPaths";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -212,7 +212,7 @@ const DocumentListPage = () => {
             </p>
             <button
               onClick={() => setIsUploadModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               Upload Document
@@ -302,7 +302,7 @@ const DocumentListPage = () => {
                   value={uploadTitle}
                   onChange={(e) => setUploadTitle(e.target.value)}
                   required
-                  className="w-full h-12 px-4 border-2 border-slate-200 rounded-xl bg-slate-50/50 text-slate-900 placeholder-slate-400 text-sm font-medium transition-all duration-200 focus:outline-none focus:border-emerald-500 focus:bg-white focus:shadow-lg focus:shadow-emerald-500/10"
+                  className="w-full h-12 px-4 border-2 border-slate-200 rounded-xl bg-slate-50/50 text-slate-900 placeholder-slate-400 text-sm font-medium transition-all duration-200 focus:outline-none focus:border-indigo-500 focus:bg-white focus:shadow-lg focus:shadow-indigo-500/10"
                   placeholder="e.g., React Interview Prep"
                 />
               </div>
@@ -311,7 +311,7 @@ const DocumentListPage = () => {
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
                   PDF File
                 </label>
-                <div className="relative border-2 border-dashed border-slate-300 rounded-xl bg-slate-50/50 hover:border-emerald-400 hover:bg-emerald-50/30 transition-all duration-200">
+                <div className="relative border-2 border-dashed border-slate-300 rounded-xl bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-200">
                   <input
                     id="file-upload"
                     type="file"
@@ -320,20 +320,20 @@ const DocumentListPage = () => {
                     accept=".pdf"
                   />
                   <div className="flex flex-col items-center justify-center py-10 px-6">
-                    <div className="w-14 h-14 rounded-xl bg-linear-to-r from-emerald-100 to-teal-100 flex items-center justify-center mb-4">
+                    <div className="w-14 h-14 rounded-xl bg-linear-to-r from-indigo-100 to-violet-100 flex items-center justify-center mb-4">
                       <Upload
-                        className="w-7 h-7 text-emerald-600"
+                        className="w-7 h-7 text-indigo-600"
                         strokeWidth={2}
                       />
                     </div>
                     <p className="text-sm font-medium text-slate-700 mb-1">
                       {uploadFile ? (
-                        <span className="text-emerald-600">
+                        <span className="text-indigo-600">
                           {uploadFile.name}
                         </span>
                       ) : (
                         <>
-                          <span className="text-emerald-600">
+                          <span className="text-indigo-600">
                             Click to upload
                           </span>{" "}
                           or drag and drop
@@ -361,7 +361,7 @@ const DocumentListPage = () => {
                 <button
                   type="submit"
                   disabled={uploadMutation.isPending}
-                  className="flex-1 h-11 px-4 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                  className="flex-1 h-11 px-4 bg-linear-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
                   {uploadMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2">
@@ -443,3 +443,4 @@ const DocumentListPage = () => {
 };
 
 export default DocumentListPage;
+

@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 
 const Button = ({
   children,
@@ -14,7 +14,7 @@ const Button = ({
 
   const variantStyles = {
     primary:
-      "bg-linear-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/25 hover:from-emerald-600 hover:to-teal-600 hover:shadow-lg hover:shadow-emerald-500/30",
+      "bg-linear-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/25 hover:from-indigo-600 hover:to-violet-600 hover:shadow-lg hover:shadow-indigo-500/30",
     secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200",
     outline:
       "bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300",
@@ -43,3 +43,4 @@ const Button = ({
 };
 
 export default Button;
+

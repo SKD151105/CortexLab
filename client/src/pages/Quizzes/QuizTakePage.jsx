@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -164,7 +164,7 @@ const QuizTakePage = () => {
         </div>
         <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="absolute inset-y-0 left-0 bg-linear-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500 ease-out"
+            className="absolute inset-y-0 left-0 bg-linear-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500 ease-out"
             style={{
               width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%`,
             }}
@@ -173,9 +173,9 @@ const QuizTakePage = () => {
       </div>
 
       <div className="bg-white/80 backdrop-blur-xl border-2 border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 p-6 mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl mb-6">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="text-sm font-semibold text-emerald-700">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-linear-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl mb-6">
+          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+          <span className="text-sm font-semibold text-indigo-700">
             Question {currentQuestionIndex + 1}
           </span>
         </div>
@@ -193,7 +193,7 @@ const QuizTakePage = () => {
                 key={index}
                 className={`group relative flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
                   isSelected
-                    ? "border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-500/10"
+                    ? "border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-500/10"
                     : "border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-white hover:shadow-md"
                 }`}
               >
@@ -211,8 +211,8 @@ const QuizTakePage = () => {
                 <div
                   className={`shrink-0 w-5 h-5 rounded-full border-2 transition-all duration-200 ${
                     isSelected
-                      ? "border-emerald-500 bg-emerald-500"
-                      : "border-slate-300 bg-white group-hover:border-emerald-400"
+                      ? "border-indigo-500 bg-indigo-500"
+                      : "border-slate-300 bg-white group-hover:border-indigo-400"
                   }`}
                 >
                   {isSelected && (
@@ -225,7 +225,7 @@ const QuizTakePage = () => {
                 <span
                   className={`ml-4 text-sm font-medium transition-colors duration-200 ${
                     isSelected
-                      ? "text-emerald-900"
+                      ? "text-indigo-900"
                       : "text-slate-700 group-hover:text-slate-900"
                   }`}
                 >
@@ -234,7 +234,7 @@ const QuizTakePage = () => {
 
                 {isSelected && (
                   <CheckCircle2
-                    className="ml-auto w-5 h-5 text-emerald-600"
+                    className="ml-auto w-5 h-5 text-indigo-600"
                     strokeWidth={2.5}
                   />
                 )}
@@ -261,7 +261,7 @@ const QuizTakePage = () => {
           <button
             onClick={handleSubmitQuiz}
             disabled={submitting}
-            className="group relative px-8 h-12 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 overflow-hidden"
+            className="group relative px-8 h-12 bg-linear-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 overflow-hidden"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               {submitting ? (
@@ -304,9 +304,9 @@ const QuizTakePage = () => {
               disabled={submitting}
               className={`w-8 h-8 rounded-lg font-semibold text-xs transition-all duration-200 ${
                 isCurrent
-                  ? "bg-linear-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25 scale-110"
+                  ? "bg-linear-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25 scale-110"
                   : isAnsweredQuestion
-                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                    ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
@@ -342,7 +342,7 @@ const QuizTakePage = () => {
             <button
               type="button"
               onClick={handleConfirmQuit}
-              className="flex-1 h-11 px-4 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
+              className="flex-1 h-11 px-4 bg-linear-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
             >
               Quit
             </button>
@@ -354,3 +354,4 @@ const QuizTakePage = () => {
 };
 
 export default QuizTakePage;
+

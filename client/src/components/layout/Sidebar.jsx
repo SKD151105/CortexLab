@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -50,7 +50,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         {/* Logo and Close button for mobile */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-slate-200/60">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-linear-to-br from-emerald-400 to-teal-500 shadow-md shadow-emerald-500/20">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-linear-to-br from-indigo-400 to-violet-500 shadow-md shadow-indigo-500/20">
               <BrainCircuit
                 className="text-white"
                 size={20}
@@ -80,7 +80,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 className={({ isActive }) =>
                   `group flex items-center gap-3 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
                     isActive
-                      ? "bg-linear-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25"
+                      ? "bg-linear-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25"
                       : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`
                 }
@@ -161,7 +161,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
               </button>
               <button
                 onClick={handleConfirmLogout}
-                className="flex-1 h-11 px-4 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
+                className="flex-1 h-11 px-4 bg-linear-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/25 active:scale-[0.98]"
               >
                 Logout
               </button>
@@ -174,3 +174,4 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 };
 
 export default Sidebar;
+

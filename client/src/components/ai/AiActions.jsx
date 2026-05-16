@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Sparkles, BookOpen, Lightbulb } from "lucide-react";
 import aiService from "../../services/aiService";
@@ -57,7 +57,7 @@ const AiActions = () => {
         {/* Header */}
         <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-slate-200/60 bg-linear-to-br from-slate-50/50 to-white/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-purple-500/25 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/25 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" strokeWidth={2} />
             </div>
             <div>
@@ -92,7 +92,7 @@ const AiActions = () => {
               <button
                 onClick={handleGenerateSummary}
                 disabled={loadingAction === "summary"}
-                className="w-full lg:w-auto lg:shrink-0 h-11 px-5 bg-linear-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                className="w-full lg:w-auto lg:shrink-0 h-11 px-5 bg-linear-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
               >
                 {loadingAction === "summary" ? (
                   <span className="flex items-center justify-center gap-2">
@@ -130,13 +130,13 @@ const AiActions = () => {
                   value={concept}
                   onChange={(e) => setConcept(e.target.value)}
                   placeholder="e.g., 'React Hooks'"
-                  className="block w-full flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-sm font-medium leading-5 text-slate-900 shadow-sm shadow-slate-200/40 transition-all duration-200 placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:outline-none focus:shadow-lg focus:shadow-teal-500/10"
+                  className="block w-full flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-sm font-medium leading-5 text-slate-900 shadow-sm shadow-slate-200/40 transition-all duration-200 placeholder:text-slate-400 focus:border-violet-500 focus:bg-white focus:outline-none focus:shadow-lg focus:shadow-violet-500/10"
                   disabled={loadingAction === "explain"}
                 />
                 <button
                   type="submit"
                   disabled={loadingAction === "explain" || !concept.trim()}
-                  className="w-full lg:w-auto lg:shrink-0 px-5 py-3.5 bg-linear-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  className="w-full lg:w-auto lg:shrink-0 px-5 py-3.5 bg-linear-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
                   {loadingAction === "explain" ? (
                     <span className="flex items-center justify-center gap-2">
@@ -169,3 +169,4 @@ const AiActions = () => {
 };
 
 export default AiActions;
+
