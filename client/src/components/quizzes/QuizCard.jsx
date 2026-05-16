@@ -51,7 +51,7 @@ const QuizCard = ({ quiz, documentId, onDelete }) => {
 					   </div>
 					   {quiz?.userAnswers?.length > 0 && (
 						   <Link to={quizTakePath} className="flex-1">
-							   <button className="group/btn relative w-full h-9 px-3 bg-linear-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-lg shadow-sky-500/25 active:scale-95 overflow-hidden">
+							   <button className="group/btn relative w-full h-9 px-3 bg-linear-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-500 text-slate-900 font-semibold text-sm rounded-lg transition-all duration-200 shadow-lg shadow-amber-400/30 active:scale-95 overflow-hidden">
 								   <span className="relative z-10 flex items-center justify-center gap-2">
 									   <Play className="w-3.5 h-3.5" strokeWidth={2.5} />
 									   Retry Quiz
