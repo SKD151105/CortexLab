@@ -6,8 +6,8 @@ import { BrainCircuit, Mail, Lock, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("skd@gmail.com");
-  const [password, setPassword] = useState("skd1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setEror] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
