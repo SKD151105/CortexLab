@@ -26,7 +26,7 @@ const FlashcardSetCard = ({ flashcardSet }) => {
             <BookOpen className="w-6 h-6 text-indigo-600" strokeWidth={2} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-slate-900 line-clamp-2 mb-1" title={flashcardSet?.documentId?.title}>
+            <h3 className="text-base font-semibold text-slate-900 line-clamp-2 leading-5 min-h-[2.5rem] mb-1" title={flashcardSet?.documentId?.title}>
               {flashcardSet?.documentId?.title}
             </h3>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -54,7 +54,7 @@ const FlashcardSetCard = ({ flashcardSet }) => {
 
         {/* Progress Bar */}
         {totalCards > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-600">
                 Progress
@@ -74,7 +74,7 @@ const FlashcardSetCard = ({ flashcardSet }) => {
       </div>
 
       {/* Study Button */}
-      <div className="mt-6 pt-4 border-t border-slate-100">
+      <div className="mt-3 pt-3 border-t border-slate-100">
         <button
           onClick={(e) => {
             e.stopPropagation();

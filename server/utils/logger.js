@@ -41,16 +41,32 @@ const redact = (value) => {
 
 const shouldLog = (level) => LEVELS[level] <= LEVELS[ACTIVE_LEVEL];
 
+const formatValue = (value) => {
+	if (typeof value === 'string') {
+		return value;
+	}
+	if (typeof value === 'number' || typeof value === 'boolean') {
+		return String(value);
+	}
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return '[Unserializable]';
+	}
+};
+
 const formatMeta = (meta) => {
 	if (!meta || (isObject(meta) && Object.keys(meta).length === 0)) {
 		return '';
 	}
 
-	try {
-		return ` ${JSON.stringify(redact(meta))}`;
-	} catch {
-		return ' {"meta":"[Unserializable]"}';
+	const sanitized = redact(meta);
+	const parts = [];
+	for (const [key, value] of Object.entries(sanitized)) {
+		parts.push(`${key}=${formatValue(value)}`);
 	}
+
+	return parts.length > 0 ? ` | ${parts.join(' ')}` : '';
 };
 
 const requestId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

@@ -41,6 +41,8 @@ export const generateFlashcards = async (text, count = 10) => {
 	});
 
 	const prompt = `Generate exactly ${count} educational flashcards from the following text.
+Focus on core concepts, mechanisms, definitions, and key takeaways.
+Avoid trivial metadata like author names, publication dates, ISBNs, or acknowledgements unless the question is explicitly about them.
 Format each flashcard as:
 Q: [Clear, specific question]
 A: [Concise, accurate answer]
@@ -113,6 +115,10 @@ export const generateQuiz = async (text, numQuestions = 5) => {
 	});
 
 	const prompt = `Generate exactly ${numQuestions} multiple choice questions from the following text.
+	Each question must be directly answerable from the provided content and should focus on core concepts or procedures in the text.
+	Do not mention the book, chapters, authors, publishing details, or sections in the questions or options.
+	Avoid trivia and metadata; stick to content understanding and application.
+	Include a mix of difficulties with at least 2 hard questions when possible.
 Format each question as:
 Q: [Question]
 O1: [Option 1]
@@ -223,23 +229,45 @@ ${text.substring(0, 20000)}`;
  * @param {Array<Object>} chunks - Relevant document chunks
  * @returns {Promise<string>}
  */
-export const chatWithContext = async (question, chunks) => {
+export const chatWithContext = async (question, chunks, history = []) => {
 	const timer = logger.timer('chatWithContext', {
 		questionLength: question?.length || 0,
-		chunkCount: chunks?.length || 0
+		chunkCount: chunks?.length || 0,
+		historyLength: history?.length || 0
 	});
 
 	const context = chunks.map((c, i) => `[Chunk ${i + 1}]\n${c.content}`).join('\n\n');
+	const historyText = history.length > 0
+		? history.map((message) => {
+			const roleLabel = message.role === 'user' ? 'User' : 'Assistant';
+			return `${roleLabel}: ${message.content}`;
+		}).join('\n')
+		: 'None';
 
-	const prompt = `Based on the following context from a document, Analyse the context and answer the user's question.
-If the answer is not in the context, say so.
+	const prompt = `You are Cortex Lab, a helpful, conversational study assistant.
+	Use the document context and the conversation history to answer.
+	If the answer is not supported by the document context, say "Not in document" and then offer the closest related info you can infer from the provided context.
 
-Context:
-${context}
+	Style guide:
+	- Warm, natural, Gemini-like tone.
+	- Keep answers concise and helpful.
+	- Start with a 1–2 sentence lead answer.
+	- Then add bullet points for supporting detail.
+	- End with a brief follow-up question only if it is directly tied to the document topic; otherwise omit the question.
+	- Use short paragraphs; use bullets when listing.
+	- If the user asks for code, include a short, relevant code example.
+	- If the user asks for in-depth, detailed, or complete answers, provide a longer, comprehensive response.
+	- If you reference the document, mention relevant chunk numbers like (Chunk 2).
 
-Question: ${question}
+	Conversation history:
+	${historyText}
 
-Answer:`;
+	Document context:
+	${context}
+
+	User question: ${question}
+
+	Answer:`;
 
 	try {
 		const response = await withTimeout(ai.models.generateContent({

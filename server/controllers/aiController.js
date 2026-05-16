@@ -6,6 +6,29 @@ import * as geminiService from '../utils/geminiService.js';
 import { findRelevantChunks } from '../utils/textChunker.js';
 import { createRequestLogger } from '../utils/logger.js';
 
+const MIN_CHUNK_WORDS = 80;
+const MIN_TEXT_WORDS_FLASHCARDS = 120;
+const SHORT_TEXT_WORDS_FLASHCARDS = 260;
+const MIN_TEXT_WORDS_QUIZ = 180;
+const SHORT_TEXT_WORDS_QUIZ = 400;
+
+const countWords = (text = '') => text.trim().split(/\s+/).filter(Boolean).length;
+
+const getChunkStats = (chunks = []) => {
+    let maxChunkWords = 0;
+    for (const chunk of chunks) {
+        const chunkWords = countWords(chunk?.content || '');
+        if (chunkWords > maxChunkWords) {
+            maxChunkWords = chunkWords;
+        }
+    }
+
+    return {
+        chunkCount: chunks.length,
+        maxChunkWords
+    };
+};
+
 // @desc    Generate flashcards from document
 // @route   POST /api/ai/generate-flashcards
 // @access  Private
@@ -37,9 +60,31 @@ export const generateFlashcards = async (req, res, next) => {
             });
         }
 
+        const textWordCount = countWords(document.extractedText || '');
+        const { chunkCount, maxChunkWords } = getChunkStats(document.chunks || []);
+
+        if (textWordCount < MIN_TEXT_WORDS_FLASHCARDS || maxChunkWords < MIN_CHUNK_WORDS) {
+            totalTimer.end({ status: 'text_too_short', textWordCount, chunkCount, maxChunkWords });
+            return res.status(400).json({
+                success: false,
+                error: 'This document is too short to generate reliable flashcards. Add more content or try another document.'
+            });
+        }
+
+        const requestedCount = Math.max(1, parseInt(count, 10) || 10);
+        const effectiveCount = textWordCount < SHORT_TEXT_WORDS_FLASHCARDS
+            ? Math.min(requestedCount, 5)
+            : requestedCount;
+
         // Generate flashcards using Gemini API
-        const geminiTimer = log.timer('generateFlashcards.geminiCall', { textLength: document.extractedText?.length || 0 });
-        const flashcards = await geminiService.generateFlashcards(document.extractedText, count);
+        const geminiTimer = log.timer('generateFlashcards.geminiCall', {
+            textLength: document.extractedText?.length || 0,
+            textWordCount,
+            chunkCount,
+            maxChunkWords,
+            effectiveCount
+        });
+        const flashcards = await geminiService.generateFlashcards(document.extractedText, effectiveCount);
         geminiTimer.end({ flashcardsCount: flashcards.length });
 
         // Save flashcards to database
@@ -61,7 +106,7 @@ export const generateFlashcards = async (req, res, next) => {
         res.status(200).json({
             success: true,
             data: flashcardSet,
-            message: `${flashcards.length} flashcards generated successfully`
+            message: `Generated ${flashcards.length} flashcards successfully${effectiveCount !== requestedCount ? ' (short document: reduced count).' : ''}`
         });
         totalTimer.end({ status: 'success' });
 
@@ -109,14 +154,33 @@ export const generateQuiz = async (req, res, next) => {
             });
         }
 
+        const textWordCount = countWords(document.extractedText || '');
+        const { chunkCount, maxChunkWords } = getChunkStats(document.chunks || []);
+
+        if (textWordCount < MIN_TEXT_WORDS_QUIZ || maxChunkWords < MIN_CHUNK_WORDS) {
+            totalTimer.end({ status: 'text_too_short', textWordCount, chunkCount, maxChunkWords });
+            return res.status(400).json({
+                success: false,
+                error: 'This document is too short for a quiz. Try flashcards or add more content to generate a quiz.'
+            });
+        }
+
+        const requestedQuestions = Math.max(1, parseInt(numQuestions, 10) || 5);
+        const effectiveQuestions = textWordCount < SHORT_TEXT_WORDS_QUIZ
+            ? Math.min(requestedQuestions, 3)
+            : requestedQuestions;
+
         // Generate quiz using Gemini
         const geminiTimer = log.timer('generateQuiz.geminiCall', {
             textLength: document.extractedText?.length || 0,
-            numQuestions
+            textWordCount,
+            chunkCount,
+            maxChunkWords,
+            effectiveQuestions
         });
         const questions = await geminiService.generateQuiz(
             document.extractedText,
-            parseInt(numQuestions, 10)
+            effectiveQuestions
         );
         geminiTimer.end({ questionCount: questions.length });
 
@@ -136,7 +200,7 @@ export const generateQuiz = async (req, res, next) => {
         res.status(201).json({
             success: true,
             data: quiz,
-            message: 'Quiz generated successfully'
+            message: `Quiz generated successfully${effectiveQuestions !== requestedQuestions ? ' (short document: reduced question count).' : ''}`
         });
         totalTimer.end({ status: 'success' });
 
@@ -268,9 +332,16 @@ export const chat = async (req, res, next) => {
         }
         historyTimer.end({ chatHistoryId: chatHistory._id?.toString?.() });
 
+        const historyForPrompt = chatHistory.messages
+            .slice(-14)
+            .map((message) => ({
+                role: message.role,
+                content: message.content
+            }));
+
         // Generate response using Gemini
         const geminiTimer = log.timer('chat.geminiCall', { relevantChunkCount: relevantChunks.length });
-        const answer = await geminiService.chatWithContext(question, relevantChunks);
+        const answer = await geminiService.chatWithContext(question, relevantChunks, historyForPrompt);
         geminiTimer.end({ answerLength: answer?.length || 0 });
 
         // Save conversation
