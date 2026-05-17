@@ -92,7 +92,7 @@ const DashboardPage = () => {
 
   const totalResources =
     dashboardData.overview.totalDocuments +
-    dashboardData.overview.totalFlashcards +
+    dashboardData.overview.totalFlashcardSets +
     dashboardData.overview.totalQuizzes;
 
   return (

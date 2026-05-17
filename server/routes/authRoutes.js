@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import {
     register,
     login,
+    googleAuth,
     getProfile,
     updateProfile,
     changePassword,
@@ -38,6 +39,16 @@ const loginValidation = [
         .withMessage('Password is required')
 ];
 
+const googleAuthValidation = [
+    body('credential')
+        .notEmpty()
+        .withMessage('Google credential is required'),
+    body('intent')
+        .optional()
+        .isIn(['login', 'register'])
+        .withMessage('Google auth intent must be login or register')
+];
+
     const refreshValidation = [
         body('refreshToken')
         .notEmpty()
@@ -47,6 +58,7 @@ const loginValidation = [
 // Public routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+router.post('/google', googleAuthValidation, googleAuth);
 router.post('/refresh-token', refreshValidation, refreshAccessToken);
 
 // Protected routes

@@ -10,9 +10,63 @@ const sanitizeUser = (user) => ({
     id: user._id,
     username: user.username,
     email: user.email,
+    authProvider: user.authProvider,
     profileImage: user.profileImage,
     createdAt: user.createdAt,
 });
+
+const ensureGoogleClientId = () => {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+        const error = new Error('Google OAuth is not configured');
+        error.statusCode = 503;
+        throw error;
+    }
+};
+
+const verifyGoogleCredential = async (credential) => {
+    ensureGoogleClientId();
+
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+
+    if (!response.ok) {
+        const error = new Error('Invalid Google credential');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const payload = await response.json();
+
+    if (payload.aud !== process.env.GOOGLE_CLIENT_ID) {
+        const error = new Error('Google credential audience mismatch');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    if (!payload.email || payload.email_verified !== 'true') {
+        const error = new Error('Google account email is not verified');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    return payload;
+};
+
+const createUsernameFromEmail = async (email) => {
+    const normalizedBase = email
+        .split('@')[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '') || 'cortexlab';
+
+    let username = normalizedBase.slice(0, 20);
+    let suffix = 1;
+
+    while (await User.findOne({ username })) {
+        username = `${normalizedBase.slice(0, 16)}${suffix}`;
+        suffix += 1;
+    }
+
+    return username;
+};
 
 const generateAccessToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -48,7 +102,7 @@ const issueAuthTokens = async (userId, req) => {
 // @desc Register new user
 // @route POST /api/auth/register
 // @access Public
-export const register = async (req, res, next) => {
+export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body || {};
 
@@ -94,7 +148,7 @@ export const register = async (req, res, next) => {
 // @desc Login user
 // @route POST /api/auth/login
 // @access Public
-export const login = async (req, res, next) => {
+export const login = async (req, res) => {
     try {
         const { email, password } = req.body || {};
 
@@ -113,6 +167,14 @@ export const login = async (req, res, next) => {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid credentials',
+                statusCode: 401
+            });
+        }
+
+        if (user.authProvider === 'google' && !user.password) {
+            return res.status(401).json({
+                success: false,
+                error: 'This account uses Google sign-in',
                 statusCode: 401
             });
         }
@@ -146,14 +208,106 @@ export const login = async (req, res, next) => {
         });
 
     } catch (error) {
-        next(error);
+        throw error;
+    }
+};
+
+// @desc Sign in/up with Google
+// @route POST /api/auth/google
+// @access Public
+export const googleAuth = async (req, res) => {
+    try {
+        const { credential, intent = 'login' } = req.body || {};
+
+        if (!credential) {
+            return res.status(400).json({
+                success: false,
+                error: 'Google credential is required',
+                statusCode: 400
+            });
+        }
+
+        if (!['login', 'register'].includes(intent)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid Google auth intent',
+                statusCode: 400
+            });
+        }
+
+        const payload = await verifyGoogleCredential(credential);
+        const email = payload.email.toLowerCase();
+        let user = await User.findOne({ email });
+
+        if (intent === 'login') {
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'No Google account found for this email. Sign up with Google first.',
+                    statusCode: 404
+                });
+            }
+
+            if (!user.googleId || user.authProvider !== 'google') {
+                return res.status(409).json({
+                    success: false,
+                    error: 'This account is not registered with Google. Sign in with email and password.',
+                    statusCode: 409
+                });
+            }
+        }
+
+        if (!user) {
+            user = await User.create({
+                username: await createUsernameFromEmail(email),
+                email,
+                googleId: payload.sub,
+                authProvider: 'google',
+                profileImage: payload.picture || null,
+            });
+        } else if (!user.googleId || user.authProvider !== 'google') {
+            return res.status(409).json({
+                success: false,
+                error:
+                    intent === 'register'
+                        ? 'An account with this email already exists. Sign in with email and password.'
+                        : 'This account is not registered with Google. Sign in with email and password.',
+                statusCode: 409
+            });
+        } else if (user.googleId && user.googleId !== payload.sub) {
+            return res.status(409).json({
+                success: false,
+                error: 'Google account does not match the existing user',
+                statusCode: 409
+            });
+        }
+
+        const { accessToken, refreshToken } = await issueAuthTokens(user._id, req);
+        const userData = sanitizeUser(user);
+
+        res.status(200).json({
+            success: true,
+            user: userData,
+            data: {
+                user: userData,
+                token: accessToken,
+                accessToken,
+                refreshToken,
+            },
+            token: accessToken,
+            accessToken,
+            refreshToken,
+            message: 'Google sign-in successful'
+        });
+    } catch (error) {
+        throw error;
     }
 };
 
 // @desc Get user profile
 // @route GET /api/auth/profile
 // @access Private
-export const getProfile = async (req, res, next) => {
+export const getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
@@ -170,14 +324,14 @@ export const getProfile = async (req, res, next) => {
         });
 
     } catch (error) {
-        next(error);
+        throw error;
     }
 };
 
 // @desc Update user profile
 // @route PUT /api/auth/profile
 // @access Private
-export const updateProfile = async (req, res, next) => {
+export const updateProfile = async (req, res) => {
     try {
         const { username, email, profileImage } = req.body || {};
         const user = await User.findById(req.user._id);
@@ -202,17 +356,25 @@ export const updateProfile = async (req, res, next) => {
         });
 
     } catch (error) {
-        next(error);
+        throw error;
     }
 };
 
 // @desc Change user password
 // @route POST /api/auth/change-password
 // @access Private
-export const changePassword = async (req, res, next) => {
+export const changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body || {};
         const user = await User.findById(req.user._id).select('+password');
+
+        if (!user.password) {
+            return res.status(400).json({
+                success: false,
+                error: 'This account does not have a local password yet',
+                statusCode: 400
+            });
+        }
 
         // Validate input
         if (!currentPassword || !newPassword) {
@@ -244,14 +406,14 @@ export const changePassword = async (req, res, next) => {
         });
 
     } catch (error) {
-        next(error);
+        throw error;
     }
 };
 
 // @desc Refresh access token
 // @route POST /api/auth/refresh-token
 // @access Public
-export const refreshAccessToken = async (req, res, next) => {
+export const refreshAccessToken = async (req, res) => {
     try {
         const { refreshToken } = req.body || {};
 
@@ -303,14 +465,14 @@ export const refreshAccessToken = async (req, res, next) => {
             message: 'Token refreshed successfully',
         });
     } catch (error) {
-        next(error);
+        throw error;
     }
 };
 
 // @desc Logout user and revoke refresh token
 // @route POST /api/auth/logout
 // @access Private
-export const logout = async (req, res, next) => {
+export const logout = async (req, res) => {
     try {
         const { refreshToken } = req.body || {};
 
@@ -326,6 +488,6 @@ export const logout = async (req, res, next) => {
             message: 'Logged out successfully',
         });
     } catch (error) {
-        next(error);
+        throw error;
     }
 };

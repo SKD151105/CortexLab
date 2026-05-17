@@ -13,6 +13,18 @@ const login = async (email, password) => {
     }
 };
 
+const googleLogin = async (credential, intent = 'login') => {
+    try {
+        const response = await axiosInstance.post(API_PATHS.AUTH.GOOGLE, {
+            credential,
+            intent,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'An unknown error occurred' };
+    }
+};
+
 const refreshToken = async (token) => {
     try {
         const response = await axiosInstance.post(API_PATHS.AUTH.REFRESH_TOKEN, {
@@ -77,6 +89,7 @@ const changePassword = async (passwords) => {
 
 const authService = {
     login,
+    googleLogin,
     register,
     refreshToken,
     logout,

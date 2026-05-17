@@ -214,6 +214,7 @@ JWT_SECRET=your_secure_random_secret
 JWT_EXPIRE=15m
 REFRESH_TOKEN_EXPIRE_DAYS=30
 GEMINI_API_KEY=your_google_gemini_api_key
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GEMINI_TIMEOUT_MS=45000
 MAX_FILE_SIZE=41943040
 MAX_CHUNKS=3000
@@ -228,6 +229,7 @@ AUTH_RATE_LIMIT_MAX_REQUESTS=20
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
+VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 ```
 
 ## Local Setup
@@ -263,6 +265,13 @@ npm run dev
 ```
 
 Typical frontend dev URL: http://localhost:5173
+
+## Google OAuth Setup
+
+- Create a Google OAuth web client in Google Cloud.
+- Add your frontend origin, such as `http://localhost:5173`, to the allowed JavaScript origins.
+- Set the same client id in both `server/.env` and `client/.env` using `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID`.
+- Restart both the client and server after adding the env vars.
 
 ## Build and Deployment
 
