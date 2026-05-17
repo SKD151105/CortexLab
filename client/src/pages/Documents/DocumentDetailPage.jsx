@@ -21,6 +21,25 @@ const TabLoader = () => (
   </div>
 );
 
+const resolveDocumentFileUrl = (filePath) => {
+  if (!filePath) return null;
+
+  if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+    try {
+      const parsedUrl = new URL(filePath);
+      if (parsedUrl.pathname.startsWith("/uploads/")) {
+        return `${BASE_URL}${parsedUrl.pathname}`;
+      }
+    } catch {
+      return filePath;
+    }
+
+    return filePath;
+  }
+
+  return `${BASE_URL}${filePath.startsWith("/") ? "" : "/"}${filePath}`;
+};
+
 const DocumentDetailPage = () => {
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,15 +73,7 @@ const DocumentDetailPage = () => {
   // Helper function to get the full PDF URL
   const getPdfUrl = () => {
     if (!document?.data?.filePath) return null;
-
-    const filePath = document.data.filePath;
-
-    if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
-      return filePath;
-    }
-
-    const baseUrl = BASE_URL;
-    return `${baseUrl}${filePath.startsWith("/") ? "" : "/"}${filePath}`;
+    return resolveDocumentFileUrl(document.data.filePath);
   };
 
   const renderContent = () => {

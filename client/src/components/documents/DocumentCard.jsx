@@ -24,9 +24,20 @@ import { BASE_URL } from "../../utils/apiPaths";
 // Helper to get the correct file URL (works for both local and deployed)
 const getDocumentFileUrl = (filePath) => {
   if (!filePath) return "";
+
   if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+    try {
+      const parsedUrl = new URL(filePath);
+      if (parsedUrl.pathname.startsWith("/uploads/")) {
+        return `${BASE_URL}${parsedUrl.pathname}`;
+      }
+    } catch {
+      return filePath;
+    }
+
     return filePath;
   }
+
   return `${BASE_URL}${filePath.startsWith("/") ? "" : "/"}${filePath}`;
 };
 

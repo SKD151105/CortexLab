@@ -11,6 +11,27 @@ import {
     getPaginationParams,
 } from "../utils/pagination.js";
 
+const buildStoredFilePath = (filename) => `/uploads/documents/${filename}`;
+
+const normalizeDocumentFilePath = (filePath, baseUrl) => {
+    if (!filePath) {
+        return filePath;
+    }
+
+    if (/^https?:\/\//i.test(filePath)) {
+        try {
+            const parsedUrl = new URL(filePath);
+            if (parsedUrl.pathname.startsWith('/uploads/')) {
+                return `${baseUrl}${parsedUrl.pathname}`;
+            }
+        } catch {
+            return filePath;
+        }
+    }
+
+    return filePath;
+};
+
 // @desc Upload PDF document
 // @route POST /api/documents/upload
 // @access Private
@@ -33,16 +54,14 @@ export const uploadDocument = async (req, res, next) => {
             });
         }
 
-        // Construct URL for the uploaded file
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const fileUrl = `${baseUrl}/uploads/documents/${req.file.filename}`;
+        const filePath = buildStoredFilePath(req.file.filename);
 
         // Create document record in the database
         const document = await Document.create({
             userId: req.user._id,
             title,
             fileName: req.file.originalname,
-            filePath: fileUrl, // Store the URL instead of the local path
+            filePath,
             fileSize: req.file.size,
             status: 'processing'
         });
@@ -161,7 +180,11 @@ export const getDocuments = async (req, res, next) => {
             },
         ]);
 
-        const items = documents[0]?.items || [];
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const items = (documents[0]?.items || []).map((document) => ({
+            ...document,
+            filePath: normalizeDocumentFilePath(document.filePath, baseUrl),
+        }));
         const totalItems = documents[0]?.totalCount?.[0]?.count || 0;
         const pagination = buildPaginationMeta({ page, limit, totalItems });
 
@@ -204,9 +227,12 @@ export const getDocument = async (req, res, next) => {
             ),
         ]);
 
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+
         // Combine document data with counts
         const documentData = {
             ...document,
+            filePath: normalizeDocumentFilePath(document.filePath, baseUrl),
             lastAccessed: new Date().toISOString(),
         };
         documentData.flashcardCount = flashcardCount;
