@@ -105,14 +105,26 @@ const issueAuthTokens = async (userId, req) => {
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body || {};
+        const normalizedEmail = email?.toLowerCase?.().trim();
+        const normalizedUsername = username?.trim?.();
+
+        if (!normalizedEmail || !normalizedUsername || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please provide username, email, and password',
+                statusCode: 400
+            });
+        }
 
         // Check if user already exists 
-        const userExists = await User.findOne({ $or: [{ email, username }] });
+        const userExists = await User.findOne({
+            $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
+        });
         if (userExists) {
             return res.status(400).json({
                 success: false,
                 error:
-                    userExists.email === email
+                    userExists.email === normalizedEmail
                         ? 'Email already in use'
                         : 'Username already in use',
                 statusCode: 400
@@ -120,7 +132,11 @@ export const register = async (req, res) => {
         }
 
         // Create new user
-        const user = await User.create({ username, email, password });
+        const user = await User.create({
+            username: normalizedUsername,
+            email: normalizedEmail,
+            password,
+        });
 
         const { accessToken, refreshToken } = await issueAuthTokens(user._id, req);
         const userData = sanitizeUser(user);
@@ -141,7 +157,7 @@ export const register = async (req, res) => {
         });
 
     } catch (error) {
-        next(error);
+        throw error;
     }
 };
 
@@ -151,9 +167,10 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body || {};
+        const normalizedEmail = email?.toLowerCase?.().trim();
 
         // Validate user
-        if (!email || !password) {
+        if (!normalizedEmail || !password) {
             return res.status(400).json({
                 success: false,
                 error: 'Please provide email and password',
@@ -162,7 +179,7 @@ export const login = async (req, res) => {
         }
 
         // Find user by email (include password for verification)
-        const user = await User.findOne({ email }).select('+password');
+        const user = await User.findOne({ email: normalizedEmail }).select('+password');
         if (!user) {
             return res.status(401).json({
                 success: false,

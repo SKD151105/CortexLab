@@ -5,14 +5,12 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: [true, 'Please provide a username'],
-        unique: true,
         trim: true,
         minlength: [3, 'Username must be at least 3 characters long']
     },
     email: {
         type: String,
         required: [true, 'Please provide an email'],
-        unique: true,
         lowercase: true,
         match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
     },
@@ -27,8 +25,7 @@ const userSchema = new mongoose.Schema({
     googleId: {
         type: String,
         unique: true,
-        sparse: true,
-        default: null
+        sparse: true
     },
     authProvider: {
         type: String,
@@ -42,6 +39,16 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+userSchema.index(
+    { email: 1 },
+    { unique: true, collation: { locale: 'en', strength: 2 } }
+);
+
+userSchema.index(
+    { username: 1 },
+    { unique: true, collation: { locale: 'en', strength: 2 } }
+);
 
 // Hash password before saving
 userSchema.pre('save', async function () {

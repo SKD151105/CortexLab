@@ -28,8 +28,18 @@ const loadGoogleScript = () =>
 
 const GoogleSignInButton = ({ onCredential, onError, text = "continue_with" }) => {
   const buttonRef = useRef(null);
+  const onCredentialRef = useRef(onCredential);
+  const onErrorRef = useRef(onError);
   const [isReady, setIsReady] = useState(false);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    onCredentialRef.current = onCredential;
+  }, [onCredential]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     if (!clientId || !buttonRef.current) {
@@ -46,11 +56,12 @@ const GoogleSignInButton = ({ onCredential, onError, text = "continue_with" }) =
 
         google.accounts.id.initialize({
           client_id: clientId,
+          auto_select: false,
           callback: ({ credential }) => {
             if (credential) {
-              onCredential?.(credential);
+              onCredentialRef.current?.(credential);
             } else {
-              onError?.("Google sign-in did not return a credential.");
+              onErrorRef.current?.("Google sign-in did not return a credential.");
             }
           },
         });
@@ -67,13 +78,16 @@ const GoogleSignInButton = ({ onCredential, onError, text = "continue_with" }) =
         setIsReady(true);
       })
       .catch((error) => {
-        onError?.(error.message || "Failed to load Google sign-in.");
+        onErrorRef.current?.(error.message || "Failed to load Google sign-in.");
       });
 
     return () => {
       isMounted = false;
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.cancel();
+      }
     };
-  }, [clientId, onCredential, onError, text]);
+  }, [clientId, text]);
 
   if (!clientId) {
     return (

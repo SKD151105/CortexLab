@@ -29,12 +29,22 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await authService.register(username, email, password);
-      toast.success("Registered in Successfully! Please login.");
-      navigate("/login");
+      const response = await authService.register(username, email, password);
+      const accessToken = response.accessToken || response.token;
+      const refreshToken = response.refreshToken;
+      const user = response.user || response.data?.user;
+
+      if (!accessToken || !refreshToken || !user) {
+        throw new Error("Invalid registration response");
+      }
+
+      login(user, accessToken, refreshToken);
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
     } catch (err) {
-      setEror(err.message || "Failed to register. Please check your credentials.");
-      toast.error(err.message || "Failed to register.");
+      const message = err.error || err.message || "Failed to register. Please check your credentials.";
+      setEror(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -182,6 +192,7 @@ const RegisterPage = () => {
             )}
 
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={loading}
               className="group relative w-full h-12 bg-gradient-to-r from-indigo-500 to-violet-500 hover:to-violet-600 active:scale-[0.98] text-white text-sm font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-lg shadow-indigo-500/25 overflow-hidden"
