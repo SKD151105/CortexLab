@@ -47,24 +47,11 @@
   <circle cx="1405" cy="316" r="320" fill="url(#auroraB)"/>
 
   <g opacity="0.95">
-    <rect x="82" y="122" width="164" height="208" rx="14" fill="url(#tile)" stroke="#BFDBFE" stroke-opacity="0.30"/>
-    <rect x="99" y="152" width="130" height="10" rx="5" fill="#C7D2FE" fill-opacity="0.62"/>
-    <rect x="99" y="178" width="108" height="10" rx="5" fill="#93C5FD" fill-opacity="0.52"/>
-    <rect x="99" y="204" width="118" height="10" rx="5" fill="#A5F3FC" fill-opacity="0.50"/>
-    <rect x="99" y="230" width="84" height="10" rx="5" fill="#99F6E4" fill-opacity="0.50"/>
-  </g>
-
-  <g opacity="0.9">
-    <path d="M980 334C1040 288 1098 320 1154 254C1200 200 1240 232 1294 268C1342 300 1390 226 1448 248C1478 260 1498 292 1515 314" stroke="url(#pathLine)" stroke-width="5.5" stroke-linecap="round" fill="none"/>
-    <path d="M980 334C1040 288 1098 320 1154 254C1200 200 1240 232 1294 268C1342 300 1390 226 1448 248C1478 260 1498 292 1515 314" stroke="url(#pathLine)" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.24" filter="url(#softGlow)"/>
-
-    <g fill="#A5F3FC">
-      <circle cx="980" cy="334" r="8"/>
-      <circle cx="1154" cy="254" r="8"/>
-      <circle cx="1294" cy="268" r="8"/>
-      <circle cx="1448" cy="248" r="8"/>
-      <circle cx="1515" cy="314" r="8"/>
-    </g>
+    <rect x="82" y="142" width="164" height="208" rx="14" fill="url(#tile)" stroke="#BFDBFE" stroke-opacity="0.30"/>
+    <rect x="99" y="172" width="130" height="10" rx="5" fill="#C7D2FE" fill-opacity="0.62"/>
+    <rect x="99" y="198" width="108" height="10" rx="5" fill="#93C5FD" fill-opacity="0.52"/>
+    <rect x="99" y="224" width="118" height="10" rx="5" fill="#A5F3FC" fill-opacity="0.50"/>
+    <rect x="99" y="250" width="84" height="10" rx="5" fill="#99F6E4" fill-opacity="0.50"/>
   </g>
 
   <g fill="#E2E8F0" opacity="0.82" font-family="Segoe UI, Inter, system-ui, -apple-system, sans-serif" font-size="16" letter-spacing="1.4">
@@ -74,9 +61,9 @@
     <text x="585" y="88">GEMINI</text>
   </g>
 
-  <text x="292" y="206" fill="#F8FAFC" font-family="Poppins, Segoe UI, system-ui, sans-serif" font-weight="700" font-size="102" letter-spacing="0.4">CortexLab</text>
-  <text x="294" y="264" fill="#C7D2FE" font-family="Segoe UI, Inter, system-ui, sans-serif" font-weight="400" font-size="33">Transform PDFs into interactive AI learning experiences</text>
-  <text x="294" y="307" fill="#A5F3FC" font-family="Segoe UI, Inter, system-ui, sans-serif" font-weight="500" font-size="27">Flashcards • Quizzes • Summaries • Context-Aware Study Chat</text>
+  <text x="292" y="226" fill="#F8FAFC" font-family="Poppins, Segoe UI, system-ui, sans-serif" font-weight="700" font-size="102" letter-spacing="0.4">CortexLab</text>
+  <text x="294" y="284" fill="#C7D2FE" font-family="Segoe UI, Inter, system-ui, sans-serif" font-weight="400" font-size="33">Transform PDFs into interactive AI learning experiences</text>
+  <text x="294" y="327" fill="#A5F3FC" font-family="Segoe UI, Inter, system-ui, sans-serif" font-weight="500" font-size="27">Flashcards • Quizzes • Summaries • Context-Aware Study Chat</text>
 
   <g opacity="0.85" fill="#93C5FD">
     <circle cx="1332" cy="108" r="5"/>

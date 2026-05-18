@@ -44,7 +44,7 @@ CortexLab is built for students and self-learners who want to turn static study 
 
 | Domain | Capability | Details |
 | --- | --- | --- |
-| Authentication | JWT-based auth, refresh-token sessions, protected routes | Register, login, refresh, profile update, password change, logout |
+| Authentication | JWT-based auth, refresh-token sessions, protected routes | Email/password + Google OAuth sign-in, register, login, refresh, profile update, password change, logout |
 | Document Ingestion | PDF upload and parsing | Upload PDF, extract text, chunk for retrieval |
 | AI Study Tools | Flashcards, quizzes, summaries | Gemini-backed generation from document context |
 | AI Chat | Context-aware Q&A | Retrieves relevant chunks before answer generation |
@@ -158,6 +158,7 @@ Base URL (development): http://localhost:8000
 
 - POST /api/auth/register
 - POST /api/auth/login
+- POST /api/auth/google
 - POST /api/auth/refresh-token
 - POST /api/auth/logout
 - GET /api/auth/profile
