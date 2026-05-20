@@ -13,11 +13,10 @@ const login = async (email, password) => {
     }
 };
 
-const googleLogin = async (credential, intent = 'login') => {
+const googleLogin = async (credential) => {
     try {
         const response = await axiosInstance.post(API_PATHS.AUTH.GOOGLE, {
             credential,
-            intent,
         });
         return response.data;
     } catch (error) {

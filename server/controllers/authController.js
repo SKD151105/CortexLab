@@ -234,7 +234,7 @@ export const login = async (req, res) => {
 // @access Public
 export const googleAuth = async (req, res) => {
     try {
-        const { credential, intent = 'login' } = req.body || {};
+        const { credential } = req.body || {};
 
         if (!credential) {
             return res.status(400).json({
@@ -244,35 +244,9 @@ export const googleAuth = async (req, res) => {
             });
         }
 
-        if (!['login', 'register'].includes(intent)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid Google auth intent',
-                statusCode: 400
-            });
-        }
-
         const payload = await verifyGoogleCredential(credential);
         const email = payload.email.toLowerCase();
         let user = await User.findOne({ email });
-
-        if (intent === 'login') {
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    error: 'No Google account found for this email. Sign up with Google first.',
-                    statusCode: 404
-                });
-            }
-
-            if (!user.googleId || user.authProvider !== 'google') {
-                return res.status(409).json({
-                    success: false,
-                    error: 'This account is not registered with Google. Sign in with email and password.',
-                    statusCode: 409
-                });
-            }
-        }
 
         if (!user) {
             user = await User.create({
@@ -282,21 +256,15 @@ export const googleAuth = async (req, res) => {
                 authProvider: 'google',
                 profileImage: payload.picture || null,
             });
-        } else if (!user.googleId || user.authProvider !== 'google') {
-            return res.status(409).json({
-                success: false,
-                error:
-                    intent === 'register'
-                        ? 'An account with this email already exists. Sign in with email and password.'
-                        : 'This account is not registered with Google. Sign in with email and password.',
-                statusCode: 409
-            });
         } else if (user.googleId && user.googleId !== payload.sub) {
             return res.status(409).json({
                 success: false,
                 error: 'Google account does not match the existing user',
                 statusCode: 409
             });
+        } else if (!user.googleId) {
+            user.googleId = payload.sub;
+            await user.save();
         }
 
         const { accessToken, refreshToken } = await issueAuthTokens(user._id, req);

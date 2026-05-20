@@ -46,7 +46,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await authService.googleLogin(credential, "login");
+      const response = await authService.googleLogin(credential);
       const accessToken = response.accessToken || response.token;
       const refreshToken = response.refreshToken;
       const user = response.user || response.data?.user;
