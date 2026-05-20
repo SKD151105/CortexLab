@@ -97,9 +97,9 @@ const QuizResultPage = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-xl">
-            <CheckCircle2 className="w-4 h-4 text-indigo-600" strokeWidth={2} />
-            <span className="text-sm font-semibold text-indigo-700">
+          <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-green-600" strokeWidth={2} />
+            <span className="text-sm font-semibold text-green-700">
               {correctAnswers} Correct
             </span>
           </div>
@@ -145,11 +145,11 @@ const QuizResultPage = () => {
                 </div>
                 <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
                   isCorrect
-                    ? 'bg-indigo-50 border-2 border-indigo-200'
+                    ? 'bg-green-50 border-2 border-green-200'
                     : 'bg-rose-50 border-2 border-rose-200'
                 }`}>
                   {isCorrect ? (
-                    <CheckCircle2 className="w-5 h-5 text-indigo-600" strokeWidth={2.5} />
+                    <CheckCircle2 className="w-5 h-5 text-green-600" strokeWidth={2.5} />
                   ) : (
                     <XCircle className="w-5 h-5 text-rose-600" strokeWidth={2.5} />
                   )}
@@ -167,7 +167,7 @@ const QuizResultPage = () => {
                       key={optIndex}
                       className={`relative px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
                         isCorrectOption
-                          ? 'bg-indigo-50 border-indigo-300 shadow-lg shadow-indigo-500/10'
+                          ? 'bg-green-50 border-green-300 shadow-lg shadow-green-500/10'
                           : isWrongAnswer
                           ? 'bg-rose-50 border-rose-300'
                           : 'bg-slate-50 border-slate-200'
@@ -176,7 +176,7 @@ const QuizResultPage = () => {
                       <div className="flex items-center justify-between gap-3">
                         <span className={`text-sm font-medium ${
                           isCorrectOption
-                            ? 'text-indigo-900'
+                            ? 'text-green-900'
                             : isWrongAnswer
                             ? 'text-rose-900'
                             : 'text-slate-700'
@@ -185,7 +185,7 @@ const QuizResultPage = () => {
                         </span>
                         <div className="flex items-center gap-2">
                           {isCorrectOption && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 border border-indigo-300 rounded-lg text-xs font-semibold text-indigo-700">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 border border-green-300 rounded-lg text-xs font-semibold text-green-700">
                               <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} />
                               Correct
                             </span>
