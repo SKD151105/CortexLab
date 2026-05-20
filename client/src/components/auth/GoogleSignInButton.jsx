@@ -2,6 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 
 const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 
+const getGsiState = () => {
+  if (!window.__gsiState) {
+    window.__gsiState = { initialized: false, clientId: null, callback: null };
+  }
+
+  return window.__gsiState;
+};
+
 const loadGoogleScript = () =>
   new Promise((resolve, reject) => {
     if (window.google?.accounts?.id) {
@@ -47,6 +55,14 @@ const GoogleSignInButton = ({ onCredential, onError, text = "continue_with" }) =
     }
 
     let isMounted = true;
+    const gsiState = getGsiState();
+    gsiState.callback = ({ credential }) => {
+      if (credential) {
+        onCredentialRef.current?.(credential);
+      } else {
+        onErrorRef.current?.("Google sign-in did not return a credential.");
+      }
+    };
 
     loadGoogleScript()
       .then((google) => {
@@ -54,17 +70,15 @@ const GoogleSignInButton = ({ onCredential, onError, text = "continue_with" }) =
           return;
         }
 
-        google.accounts.id.initialize({
-          client_id: clientId,
-          auto_select: false,
-          callback: ({ credential }) => {
-            if (credential) {
-              onCredentialRef.current?.(credential);
-            } else {
-              onErrorRef.current?.("Google sign-in did not return a credential.");
-            }
-          },
-        });
+        if (!gsiState.initialized || gsiState.clientId !== clientId) {
+          google.accounts.id.initialize({
+            client_id: clientId,
+            auto_select: false,
+            callback: (payload) => gsiState.callback?.(payload),
+          });
+          gsiState.initialized = true;
+          gsiState.clientId = clientId;
+        }
 
         buttonRef.current.innerHTML = "";
         google.accounts.id.renderButton(buttonRef.current, {
